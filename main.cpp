@@ -1,6 +1,6 @@
 #include "common/RayTracer.h"
 
-#define ASSIGNMENT 5
+//#define ASSIGNMENT 5
 #if ASSIGNMENT == 5
 #define APPLICATION Assignment5
 #include "assignment5/Assignment5.h"
@@ -13,6 +13,9 @@
 #elif ASSIGNMENT == 8
 #define APPLICATION Assignment8
 #include "assignment8/Assignment8.h"
+#else
+#define APPLICATION Scanline
+#include "scanline/Scanline.h"
 #endif
 
 int main(int argc, char** argv)  
