@@ -175,7 +175,7 @@ std::shared_ptr<ColorSampler> Scanline::CreateSampler() const
 
 std::shared_ptr<class Renderer> Scanline::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    return std::make_shared<ForwardRenderer>(scene, sampler);
+    return std::make_shared<BackwardRenderer>(scene, sampler);
 }
 
 int Scanline::GetSamplesPerPixel() const
