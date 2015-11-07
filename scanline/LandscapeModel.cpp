@@ -55,7 +55,7 @@ namespace LandscapeModel
     
     void AddTriangleStrip(std::vector<unsigned int>& left, std::vector<unsigned int>& right, std::vector<glm::uvec3>& triangles)
     {
-        int l = 0, r = 0;
+        unsigned l = 0, r = 0;
         int a, b, c, d;
         while (l < left.size() && r < right.size())
         {
@@ -303,8 +303,8 @@ namespace LandscapeModel
         std::vector<unsigned int>   rightNearVertices;
         unsigned int    curLeftQuadIndex;
         unsigned int    curRightQuadIndex;
-        unsigned int    lastLeftQuadIndex;
-        unsigned int    lastRightQuadIndex;
+        unsigned int    lastLeftQuadIndex = -1;
+        unsigned int    lastRightQuadIndex = -1;
         unsigned int    totalRoadVertices = (bSteps + 1) * 2;
         for (int step = 0; step <= bSteps; ++step)
         {

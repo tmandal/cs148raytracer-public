@@ -61,6 +61,9 @@ file(GLOB_RECURSE ASSIGNMENT_HEADERS "./assignment*/*.h")
 file(GLOB_RECURSE INSTRUCTOR_SOURCES "./instructor/*.cpp")
 file(GLOB_RECURSE INSTRUCTOR_HEADERS "./instructor/*.h")
 
+file(GLOB_RECURSE STUDENT_SOURCES "./noise/*.cpp" "./scanline/*.cpp")
+file(GLOB_RECURSE STUDENT_HEADERS "./noise/*.h" "./scanline/*.h")
+
 # Path to Assets
 add_definitions("-DASSET_PATH=${CMAKE_CURRENT_SOURCE_DIR}/assets")
 
@@ -70,7 +73,7 @@ add_definitions("-DASSET_PATH=${CMAKE_CURRENT_SOURCE_DIR}/assets")
 # want to run their code.
 add_definitions(${CXX_FLAGS})
 add_executable(cs148raytracer main.cpp ${COMMON_SOURCES} ${COMMON_HEADERS}
-    ${ASSIGNMENT_SOURCES} ${ASSIGNMENT_HEADERS} ${INSTRUCTOR_SOURCES} ${INSTRUCTOR_HEADERS})
+    ${ASSIGNMENT_SOURCES} ${ASSIGNMENT_HEADERS} ${INSTRUCTOR_SOURCES} ${INSTRUCTOR_HEADERS} ${STUDENT_SOURCES} ${STUDENT_HEADERS})
 
 # Open Asset Import Library
 if (WIN32)
@@ -127,6 +130,10 @@ source_group(common\\Utility\\Texture REGULAR_EXPRESSION common/Utility/Texture/
 source_group(common\\Utility\\Mesh REGULAR_EXPRESSION common/Utility/Mesh/.*)
 source_group(common\\Utility\\Mesh\\Loading REGULAR_EXPRESSION common/Utility/Mesh/Loading/.*)
 source_group(common\\Utility\\Timer REGULAR_EXPRESSION common/Utility/Timer/.*)
+source_group(noise REGULAR_EXPRESSION noise/.*)
+source_group(noise\\model REGULAR_EXPRESSION noise/model/.*)
+source_group(noise\\module REGULAR_EXPRESSION noise/module/.*)
+source_group(scanline REGULAR_EXPRESSION scanline/.*)
 
 # Copy dlls
 if (WIN32)
