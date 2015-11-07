@@ -23,6 +23,7 @@ struct IntersectionState
         remainingReflectionBounces = state->remainingReflectionBounces;
         remainingRefractionBounces = state->remainingRefractionBounces;
         intersectionT = state->intersectionT;
+        currentIOR = state->currentIOR;
     }
 
     std::shared_ptr<struct IntersectionState> reflectionIntersection;
@@ -43,4 +44,5 @@ struct IntersectionState
 
     // Utility Functions
     glm::vec3 ComputeNormal() const;
+    glm::vec2 ComputeUV() const;
 };
