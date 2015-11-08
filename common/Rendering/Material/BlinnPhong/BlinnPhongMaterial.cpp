@@ -33,7 +33,7 @@ glm::vec3 BlinnPhongMaterial::ComputeSpecular(const IntersectionState& intersect
 {
     const glm::vec3 useSpecularColor = (textureStorage.find("specularTexture") != textureStorage.end()) ? glm::vec3(textureStorage.at("specularTexture")->Sample(intersection.ComputeUV())) : specularColor;
     const float highlight = std::pow(NdH, shininess);
-    const glm::vec3 specularResponse = highlight * useSpecularColor * lightColor;
+    const glm::vec3 specularResponse = highlight * specularColor * lightColor;
     return specularResponse;
 }
 
@@ -53,7 +53,6 @@ void BlinnPhongMaterial::LoadMaterialFromAssimp(std::shared_ptr<aiMaterial> assi
     assimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, glm::value_ptr(diffuseColor), nullptr);
     assimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, glm::value_ptr(specularColor), nullptr);
     assimpMaterial->Get(AI_MATKEY_SHININESS, &shininess, nullptr);
-
     if (assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE)) {
         aiString aiDiffusePath;
         assimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &aiDiffusePath);
