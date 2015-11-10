@@ -5,5 +5,6 @@ enum class AccelerationTypes
     NONE,
     UNIFORM_GRID,
     BVH,
-    KDTREE
+    KDTREE,
+    OCTTREE
 };
