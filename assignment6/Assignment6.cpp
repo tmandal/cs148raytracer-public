@@ -55,16 +55,18 @@ std::shared_ptr<Scene> Assignment6::CreateScene() const
     pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
 
 // Assignment 6 Part 1 TODO: Change the '1' here.
-#define ACCELERATION_TYPE 1
+#define ACCELERATION_TYPE 3
 #if ACCELERATION_TYPE == 0
     newScene->GenerateAccelerationData(AccelerationTypes::NONE);
 #elif ACCELERATION_TYPE == 1
     newScene->GenerateAccelerationData(AccelerationTypes::BVH);
-#else
+#elif ACCELERATION_TYPE == 2
     UniformGridAcceleration* accelerator = dynamic_cast<UniformGridAcceleration*>(newScene->GenerateAccelerationData(AccelerationTypes::UNIFORM_GRID));
     assert(accelerator);
     // Assignment 6 Part 2 TODO: Change the glm::ivec3(10, 10, 10) here.
-    accelerator->SetSuggestedGridSize(glm::ivec3(10, 10, 10));
+    accelerator->SetSuggestedGridSize(glm::ivec3(3, 3, 3));
+#else
+    newScene->GenerateAccelerationData(AccelerationTypes::KDTREE);
 #endif    
     newScene->AddLight(pointLight);
 

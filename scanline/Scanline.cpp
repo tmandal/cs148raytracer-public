@@ -12,7 +12,7 @@ std::shared_ptr<Camera> Scanline::CreateCamera() const
     const glm::vec2 resolution = GetImageOutputResolution();
     std::shared_ptr<Camera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
     camera->SetPosition(glm::vec3(0.f, -4.1469f, 0.73693f));
-    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.0f);
+    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
 #else
     const glm::vec2 resolution = GetImageOutputResolution();
     std::shared_ptr<Camera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
@@ -38,6 +38,7 @@ std::shared_ptr<Scene> Scanline::CreateScene() const
     std::shared_ptr<BlinnPhongMaterial> cubeMaterial = std::make_shared<BlinnPhongMaterial>();
     cubeMaterial->SetDiffuse(glm::vec3(1.f, 1.f, 1.f));
     cubeMaterial->SetSpecular(glm::vec3(0.6f, 0.6f, 0.6f), 40.f);
+    cubeMaterial->SetReflectivity(0.3f);
     
 #if 0
     // Objects
@@ -59,7 +60,7 @@ std::shared_ptr<Scene> Scanline::CreateScene() const
     
     // My object models
     
-#if 1
+#if 0
     // Landscape models
 #if 1
     float		terrainZLength = 2.0;
@@ -94,12 +95,24 @@ std::shared_ptr<Scene> Scanline::CreateScene() const
     
     std::shared_ptr<SceneObject> mySceneObject = std::make_shared<SceneObject>();
     mySceneObject->AddMeshObject(myMeshObjects);
-    mySceneObject->CreateAccelerationData(AccelerationTypes::NONE);
+    mySceneObject->CreateAccelerationData(AccelerationTypes::BVH);
+    mySceneObject->ConfigureAccelerationStructure([](AccelerationStructure* genericAccelerator) {
+            BVHAcceleration* accelerator = dynamic_cast<BVHAcceleration*>(genericAccelerator);
+            accelerator->SetMaximumChildren(2);
+            accelerator->SetNodesOnLeaves(2);
+        });
+
+    mySceneObject->ConfigureChildMeshAccelerationStructure([](AccelerationStructure* genericAccelerator) {
+            BVHAcceleration* accelerator = dynamic_cast<BVHAcceleration*>(genericAccelerator);
+            accelerator->SetMaximumChildren(2);
+            accelerator->SetNodesOnLeaves(2);
+        });
+
     mySceneObject->SetPosition(glm::vec3(-1.0, 0.0, 1.0));
     newScene->AddSceneObject(mySceneObject);
 #endif
     
-#if 1
+#if 0
     // Sky model
     
     std::vector<std::shared_ptr<aiMaterial>> loadedMaterials;
@@ -116,7 +129,7 @@ std::shared_ptr<Scene> Scanline::CreateScene() const
     newScene->AddSceneObject(skySceneObject);
 #endif
     
-#if 0
+#if 1
     // A car model
     
     std::vector<std::shared_ptr<aiMaterial>> carLoadedMaterials;
@@ -124,13 +137,42 @@ std::shared_ptr<Scene> Scanline::CreateScene() const
     for (size_t i = 0; i < carObjects.size(); ++i) {
         std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
         materialCopy->LoadMaterialFromAssimp(carLoadedMaterials[i]);
+        // Texture load
+        switch (i)
+        {
+        case 0 : // car body
+            materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("local/car/eclipse2003-diffuse-red.tga"));
+            materialCopy->SetTexture("normalTexture", TextureLoader::LoadTexture("local/car/eclipse2003-normalmap.tga"));
+            break;
+        case 1 : // car wheels+acc
+            materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("local/car/wheel-diffuse.tga"));
+            materialCopy->SetTexture("normalTexture", TextureLoader::LoadTexture("local/car/wheel-normalsmap.tga"));
+            break;
+        default:
+            assert(0);
+        }
         carObjects[i]->SetMaterial(materialCopy);
     }
     
     std::shared_ptr<SceneObject> carSceneObject = std::make_shared<SceneObject>();
     carSceneObject->AddMeshObject(carObjects);
     carSceneObject->CreateAccelerationData(AccelerationTypes::NONE);
-    carSceneObject->MultScale(0.05);
+    /*
+    carSceneObject->ConfigureAccelerationStructure([](AccelerationStructure* genericAccelerator) {
+            BVHAcceleration* accelerator = dynamic_cast<BVHAcceleration*>(genericAccelerator);
+            accelerator->SetMaximumChildren(2);
+            accelerator->SetNodesOnLeaves(2);
+        });
+
+    carSceneObject->ConfigureChildMeshAccelerationStructure([](AccelerationStructure* genericAccelerator) {
+            BVHAcceleration* accelerator = dynamic_cast<BVHAcceleration*>(genericAccelerator);
+            accelerator->SetMaximumChildren(2);
+            accelerator->SetNodesOnLeaves(2);
+        });
+        */
+    carSceneObject->SetPosition(glm::vec3(0.0, 0.0, 0.5));
+    carSceneObject->Rotate(glm::vec3(0.f, 1.f, 0.f), PI);
+    carSceneObject->MultScale(0.03);
     newScene->AddSceneObject(carSceneObject);
 #endif
 
@@ -152,6 +194,20 @@ std::shared_ptr<Scene> Scanline::CreateScene() const
     pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
     newScene->AddLight(pointLight);
 #endif
+
+#define ACCELERATION_TYPE 3
+
+#if ACCELERATION_TYPE == 0
+    newScene->GenerateAccelerationData(AccelerationTypes::NONE);
+#elif ACCELERATION_TYPE == 1
+    newScene->GenerateAccelerationData(AccelerationTypes::BVH);
+#elif ACCELERATION_TYPE == 2
+    UniformGridAcceleration* accelerator = dynamic_cast<UniformGridAcceleration*>(newScene->GenerateAccelerationData(AccelerationTypes::UNIFORM_GRID));
+    assert(accelerator);
+    accelerator->SetSuggestedGridSize(glm::ivec3(10, 10, 10));
+#else
+    newScene->GenerateAccelerationData(AccelerationTypes::KDTREE);
+#endif
     
     return newScene;
     
@@ -159,18 +215,8 @@ std::shared_ptr<Scene> Scanline::CreateScene() const
 std::shared_ptr<ColorSampler> Scanline::CreateSampler() const
 {
     std::shared_ptr<JitterColorSampler> jitter = std::make_shared<JitterColorSampler>();
-    // ASSIGNMENT 5 TODO: Change the grid size to be glm::ivec3(X, Y, 1).
     jitter->SetGridSize(glm::ivec3(1, 1, 1));
-    
-    std::shared_ptr<SimpleAdaptiveSampler> sampler = std::make_shared<SimpleAdaptiveSampler>();
-    sampler->SetInternalSampler(jitter);
-    
-    // ASSIGNMENT 5 TODO: Change the '1.f' in '1.f * SMALL_EPSILON' here to be higher and see what your results are. (Part 3)
-    sampler->SetEarlyExitParameters(1.f * SMALL_EPSILON, 4);
-    
-    // ASSIGNMENT 5 TODO: Comment out 'return jitter;' to use the adaptive sampler. (Part 2)
     return jitter;
-    return sampler;
 }
 
 std::shared_ptr<class Renderer> Scanline::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
@@ -180,7 +226,6 @@ std::shared_ptr<class Renderer> Scanline::CreateRenderer(std::shared_ptr<Scene> 
 
 int Scanline::GetSamplesPerPixel() const
 {
-    // ASSIGNMENT 5 TODO: Change the '1' here to increase the maximum number of samples used per pixel. (Part 1).
     return 1;
 }
 
@@ -191,12 +236,12 @@ bool Scanline::NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleIndex)
 
 int Scanline::GetMaxReflectionBounces() const
 {
-    return 0;
+    return 2;
 }
 
 int Scanline::GetMaxRefractionBounces() const
 {
-    return 0;
+    return 4;
 }
 
 glm::vec2 Scanline::GetImageOutputResolution() const

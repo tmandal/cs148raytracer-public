@@ -16,6 +16,9 @@ namespace AccelerationGenerator
             case AccelerationTypes::UNIFORM_GRID:
                 acceleration = make_unique<UniformGridAcceleration>();
                 break;
+            case AccelerationTypes::KDTREE:
+                acceleration = make_unique<KDTreeAcceleration>();
+                break;
             default:
                 throw std::runtime_error("ERROR: Unsupported acceleration structure.");
                 break;

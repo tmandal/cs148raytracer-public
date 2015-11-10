@@ -7,3 +7,4 @@
 #include "common/Acceleration/Naive/NaiveAcceleration.h"
 #include "common/Acceleration/BVH/BVHAcceleration.h"
 #include "common/Acceleration/UniformGrid/UniformGridAcceleration.h"
+#include "common/Acceleration/KDTree/KDTreeAcceleration.h"
