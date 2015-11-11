@@ -12,6 +12,7 @@
 #include "glm/gtx/component_wise.hpp"
 
 #define VISUALIZE_PHOTON_MAPPING 1
+//#define PHOTON_MAPPING_DEBUG
 
 // Utility function
 float RandFloat01()
@@ -94,6 +95,10 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
                                 ? (hitDiffuse.x > hitDiffuse.z ? hitDiffuse.x : hitDiffuse.z)
                                 : (hitDiffuse.y > hitDiffuse.z ? hitDiffuse.y : hitDiffuse.z);
         float randProb = RandFloat01();
+
+#ifdef PHOTON_MAPPING_DEBUG
+        std::cout << "TracePhoton : hitDiffuse = " << glm::to_string(hitDiffuse) << " reflectProb = " << reflectProb << " randProb = " << randProb << std::endl;
+#endif
         
         if (path.size() > 1)
         {
@@ -121,13 +126,17 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
             float   y = r * sinf(theta);
             float   z = sqrt(1 - u1);
             glm::vec3   drRayDirection = glm::normalize(glm::vec3(x, y, z));
+
+#ifdef PHOTON_MAPPING_DEBUG
+            std::cout << "Hemisphere sample ray direction = " << glm::to_string(drRayDirection) << std::endl;
+#endif
             
-            //
+            // Normal, Tangent and Bitangent vector generation
             glm::vec3   N = glm::normalize(state.ComputeNormal());
             glm::vec3   T;
             glm::vec3   B;
             
-            if (N.x > LARGE_EPSILON || N.y > LARGE_EPSILON)
+            if (N.x > LARGE_EPSILON || N.x < -LARGE_EPSILON || N.y > LARGE_EPSILON || N.y < -LARGE_EPSILON)
                 T = glm::vec3(-N.y, N.x, 0.0);
             else
                 T = glm::vec3(0.0, -N.z, N.y);
@@ -135,9 +144,14 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
             
             T = glm::normalize(T);
             B = glm::normalize(B);
+
+#ifdef PHOTON_MAPPING_DEBUG
+            std::cout << "N = " << glm::to_string(N) << " T = " << glm::to_string(T) << " B = " << glm::to_string(B) << std::endl;
+#endif
             
             glm::mat3   toWorldSpaceTransform = glm::mat3(T, B, N);
             
+            // Construct diffuse reflection ray
             Ray diffuseReflectionRay;
             
             diffuseReflectionRay.SetRayPosition(intersectionPoint);
