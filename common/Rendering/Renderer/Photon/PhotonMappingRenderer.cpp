@@ -13,6 +13,12 @@
 
 #define VISUALIZE_PHOTON_MAPPING 1
 
+// Utility function
+float RandFloat01()
+{
+    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+}
+
 PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene, std::shared_ptr<class ColorSampler> sampler):
     BackwardRenderer(scene, sampler), 
     diffusePhotonNumber(1000000),
@@ -70,10 +76,77 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
      *        ... set photon properties ...
      *        photonMap.insert(myPhoton);
      */
+    
+    if (remainingBounces < 0)
+        return;
 
     assert(photonRay);
     IntersectionState state(0, 0);
     state.currentIOR = currentIOR;
+    
+    if (storedScene->Trace(photonRay, &state))
+    {
+        const glm::vec3     intersectionPoint = state.intersectionRay.GetRayPosition(state.intersectionT);
+        const MeshObject*   hitMeshObject = state.intersectedPrimitive->GetParentMeshObject();
+        const Material*     hitMaterial = hitMeshObject->GetMaterial();
+        const glm::vec3     hitDiffuse = glm::normalize(hitMaterial->GetBaseDiffuseReflection());
+        const float         reflectProb = (hitDiffuse.x > hitDiffuse.y)
+                                ? (hitDiffuse.x > hitDiffuse.z ? hitDiffuse.x : hitDiffuse.z)
+                                : (hitDiffuse.y > hitDiffuse.z ? hitDiffuse.y : hitDiffuse.z);
+        float randProb = RandFloat01();
+        
+        if (path.size() > 1)
+        {
+            Photon  photon;
+            photon.position = intersectionPoint;
+            photon.intensity = lightIntensity;
+            photon.toLightRay = Ray(glm::vec3(photonRay->GetPosition()), -photonRay->GetRayDirection());
+            photonMap.insert(photon);
+        }
+        
+        if (randProb < reflectProb)
+        {
+            // Scatter
+            
+            path.push_back('R');
+            
+            // Hemisphere sampling
+            float   u1 = RandFloat01();
+            float   u2 = RandFloat01();
+            
+            float   r = sqrtf(u1);
+            float   theta = 2 * PI * u2;
+            
+            float   x = r * cosf(theta);
+            float   y = r * sinf(theta);
+            float   z = sqrt(1 - u1);
+            glm::vec3   drRayDirection = glm::normalize(glm::vec3(x, y, z));
+            
+            //
+            glm::vec3   N = glm::normalize(state.ComputeNormal());
+            glm::vec3   T;
+            glm::vec3   B;
+            
+            if (N.x > LARGE_EPSILON || N.y > LARGE_EPSILON)
+                T = glm::vec3(-N.y, N.x, 0.0);
+            else
+                T = glm::vec3(0.0, -N.z, N.y);
+            B = glm::cross(N, T);
+            
+            T = glm::normalize(T);
+            B = glm::normalize(B);
+            
+            glm::mat3   toWorldSpaceTransform = glm::mat3(T, B, N);
+            
+            Ray diffuseReflectionRay;
+            
+            diffuseReflectionRay.SetRayPosition(intersectionPoint);
+            diffuseReflectionRay.SetRayDirection(toWorldSpaceTransform * drRayDirection);
+            
+            TracePhoton(photonMap, &diffuseReflectionRay, lightIntensity, path, currentIOR, remainingBounces-1);
+        }
+        
+    }
 }
 
 glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionState& intersection, const class Ray& fromCameraRay) const
