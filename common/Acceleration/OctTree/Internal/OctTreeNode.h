@@ -13,8 +13,8 @@ private:
     void CreateParentNode(std::vector<std::shared_ptr<class AccelerationNode>>& childObjects, int maximumChildren, int maximumDepth, int depth);
     std::string PrintContents() const;
     
-    std::vector<std::shared_ptr<OctTreeNode>>               childNodes;
-    std::vector<std::shared_ptr<class AccelerationNode>>    leafObjects;
+    std::vector<std::shared_ptr<OctTreeNode>>               childOctTreeNodes;
+    std::vector<std::shared_ptr<class AccelerationNode>>    leafNodes;
     bool isLeafNode;
     Box boundingBox;
 };

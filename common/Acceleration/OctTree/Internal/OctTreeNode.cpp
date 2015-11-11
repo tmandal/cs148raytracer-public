@@ -2,7 +2,7 @@
 #include "common/Acceleration/AccelerationNode.h"
 #include "common/Intersection/IntersectionState.h"
 
-// Utility function
+// Utility function to check intersection between two boxes
 bool Intersect(const Box& box1, const Box& box2)
 {
     for (int i = 0; i < 3; ++i)
@@ -20,13 +20,13 @@ isLeafNode(false), boundingBox(boundingBox)
 void OctTreeNode::CreateLeafNode(std::vector<std::shared_ptr<class AccelerationNode>>& childObjects)
 {
     isLeafNode = true;
-    leafObjects.insert(leafObjects.end(), childObjects.begin(), childObjects.end());
+    leafNodes.insert(leafNodes.end(), childObjects.begin(), childObjects.end());
 }
 
 void OctTreeNode::CreateParentNode(std::vector<std::shared_ptr<class AccelerationNode>>& childObjects, int maximumChildren, int maximumDepth, int depth)
 {
     // Stop criteria
-    if (childObjects.size() < maximumChildren || depth < maximumDepth)  {
+    if (childObjects.size() < (size_t)maximumChildren || depth >= maximumDepth)  {
         CreateLeafNode(childObjects);
         return;
     }
@@ -36,18 +36,22 @@ void OctTreeNode::CreateParentNode(std::vector<std::shared_ptr<class Acceleratio
     glm::vec3   bboxCenter = boundingBox.Center();
     glm::vec3   bboxMax = boundingBox.maxVertex;
     glm::vec3   bboxHLen = bboxCenter - bboxMin;
+    glm::vec3   bboxHLenY = glm::vec3(0.0, bboxHLen.y, 0.0);
+    glm::vec3   bboxHLenZ = glm::vec3(0.0, 0.0, bboxHLen.z);
+    glm::vec3   bboxHLenYZ = glm::vec3(0.0, bboxHLen.y, bboxHLen.z);
     
     std::vector<Box>    octantBoxes;
     octantBoxes.resize(8);
-    octantBoxes.emplace_back(bboxMin, bboxCenter);
-    octantBoxes.emplace_back(bboxMin + glm::vec3(0.0, 0.0, bboxHLen.z), bboxCenter + glm::vec3(0.0, 0.0, bboxHLen.z));
-    octantBoxes.emplace_back(bboxMin + glm::vec3(0.0, bboxHLen.y, 0.0), bboxCenter + glm::vec3(0.0, bboxHLen.y, 0.0));
-    octantBoxes.emplace_back(bboxMin + glm::vec3(0.0, bboxHLen.y, bboxHLen.z), bboxCenter + glm::vec3(0.0, bboxHLen.y, bboxHLen.z));
-    octantBoxes.emplace_back(bboxCenter + glm::vec3(0.0, -bboxHLen.y, -bboxHLen.z), bboxMax + glm::vec3(0.0, -bboxHLen.y, -bboxHLen.z));
-    octantBoxes.emplace_back(bboxCenter + glm::vec3(0.0, -bboxHLen.y, 0.0), bboxMax + glm::vec3(0.0, -bboxHLen.y, 0.0));
-    octantBoxes.emplace_back(bboxCenter + glm::vec3(0.0, 0.0, -bboxHLen.z), bboxMax + glm::vec3(0.0, 0.0, -bboxHLen.z));
-    octantBoxes.emplace_back(bboxCenter, bboxMax);
+    octantBoxes.emplace_back(bboxMin,              bboxCenter);
+    octantBoxes.emplace_back(bboxMin + bboxHLenZ,  bboxCenter + bboxHLenZ);
+    octantBoxes.emplace_back(bboxMin + bboxHLenY,  bboxCenter + bboxHLenY);
+    octantBoxes.emplace_back(bboxMin + bboxHLenYZ, bboxCenter + bboxHLenYZ);
+    octantBoxes.emplace_back(bboxCenter - bboxHLenYZ, bboxMax - bboxHLenYZ);
+    octantBoxes.emplace_back(bboxCenter - bboxHLenY,  bboxMax - bboxHLenY);
+    octantBoxes.emplace_back(bboxCenter - bboxHLenZ,  bboxMax - bboxHLenZ);
+    octantBoxes.emplace_back(bboxCenter,              bboxMax);
     
+    // Distribute objects in 8 octants. An object can be in multiple octants.
     std::vector<std::vector<std::shared_ptr<class AccelerationNode>>>   octantObjects;
     octantObjects.resize(8);
     
@@ -60,33 +64,22 @@ void OctTreeNode::CreateParentNode(std::vector<std::shared_ptr<class Acceleratio
         }
     }
     
-    childNodes.resize(8);
+    // Recursively create child nodes
+    childOctTreeNodes.resize(8);
     
     for (size_t o = 0; o < 8; ++o)
     {
         if (octantObjects[o].size() == 0)
-        {
-            childNodes[o] = nullptr;
-        }
+            childOctTreeNodes[o] = nullptr;
         else
-        {
-            childNodes[o] = std::make_shared<OctTreeNode>(octantObjects[o], octantBoxes[o], maximumChildren, maximumDepth, depth+1);
-        }
+            childOctTreeNodes[o] = std::make_shared<OctTreeNode>(octantObjects[o], octantBoxes[o], maximumChildren, maximumDepth, depth+1);
     }
 }
 
 bool OctTreeNode::Trace(const class SceneObject* parentObject, class Ray* inputRay, struct IntersectionState* outputIntersection) const
 {
-    float previousIntersectionT = outputIntersection ? outputIntersection->intersectionT : 0.f;
     if (!boundingBox.Trace(parentObject, inputRay, outputIntersection)) {
-        if (outputIntersection) {
-            outputIntersection->intersectionT = previousIntersectionT;
-        }
         return false;
-    }
-    
-    if (outputIntersection) {
-        outputIntersection->intersectionT = previousIntersectionT;
     }
     
     bool hitObject = false;
@@ -96,8 +89,8 @@ bool OctTreeNode::Trace(const class SceneObject* parentObject, class Ray* inputR
             hitObject |= leafNodes[i]->Trace(parentObject, inputRay, outputIntersection);
         }
     } else {
-        for (size_t i = 0; i < childBVHNodes.size(); ++i) {
-            hitObject |= childBVHNodes[i]->Trace(parentObject, inputRay, outputIntersection);
+        for (size_t i = 0; i < childOctTreeNodes.size(); ++i) {
+            hitObject |= childOctTreeNodes[i]->Trace(parentObject, inputRay, outputIntersection);
         }
     }
     return hitObject;
@@ -111,8 +104,8 @@ std::string OctTreeNode::PrintContents() const
             ss << leafNodes[i]->GetHumanIdentifier() << "  ";
         }
     } else {
-        for (size_t i = 0; i < childBVHNodes.size(); ++i) {
-            ss << childBVHNodes[i]->PrintContents() << "  ";
+        for (size_t i = 0; i < childOctTreeNodes.size(); ++i) {
+            ss << childOctTreeNodes[i]->PrintContents() << "  ";
         }
     }
     return ss.str();
