@@ -154,7 +154,7 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
             // Construct diffuse reflection ray
             Ray diffuseReflectionRay;
             
-            diffuseReflectionRay.SetRayPosition(intersectionPoint);
+            diffuseReflectionRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * N);
             diffuseReflectionRay.SetRayDirection(toWorldSpaceTransform * drRayDirection);
             
             TracePhoton(photonMap, &diffuseReflectionRay, lightIntensity, path, currentIOR, remainingBounces-1);
