@@ -11,6 +11,9 @@ public:
 
     void SetZNear(float input);
     void SetZFar(float input);
+    
+    void SetZFocal(float input);
+    void SetApertureRadius(float input);
 
 private:
     float aspectRatio;
@@ -18,4 +21,8 @@ private:
 
     float zNear;
     float zFar;
+    
+    float zFocal;
+    
+    float apertureRadius;
 };

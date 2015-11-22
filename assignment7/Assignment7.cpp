@@ -25,7 +25,7 @@ std::shared_ptr<Scene> Assignment7::CreateScene() const
     for (size_t i = 0; i < cubeObjects.size(); ++i) {
         std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
         materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
-        materialCopy->SetAmbient(glm::vec3(0.0, 0.0, 0.0)); // turn off ambient color
+        materialCopy->SetAmbient(glm::vec3(0.0, 0.0, 0.0));
         cubeObjects[i]->SetMaterial(materialCopy);
     }
 

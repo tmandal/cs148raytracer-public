@@ -15,12 +15,15 @@ public:
     glm::vec3 ComputeSampleColor(const struct IntersectionState& intersection, const class Ray& fromCameraRay) const override;
 
     void SetNumberOfDiffusePhotons(int diffuse);
+    void SetPhotonSphereRadius(float radius);
 private:
     using PhotonKdtree = KDTree::KDTree<3, Photon, PhotonAccessor>;
     PhotonKdtree diffuseMap;
 
     int diffusePhotonNumber;
     int maxPhotonBounces;
+    
+    float photonSphereRadius;
 
     void GenericPhotonMapGeneration(PhotonKdtree& photonMap, int totalPhotons);
     void TracePhoton(PhotonKdtree& photonMap, Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces);

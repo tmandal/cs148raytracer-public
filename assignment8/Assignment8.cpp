@@ -1,12 +1,19 @@
 #include "assignment8/Assignment8.h"
 #include "common/core.h"
 
+//#define DO_DEPTH_OF_FIELD
+#define DO_PHOTON_GATHERING
+
 std::shared_ptr<Camera> Assignment8::CreateCamera() const
 {
     const glm::vec2 resolution = GetImageOutputResolution();
-    std::shared_ptr<Camera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
+    std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
     camera->SetPosition(glm::vec3(0.f, -4.1469f, 0.73693f));
-    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
+    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.0f);
+#ifdef DO_DEPTH_OF_FIELD
+    camera->SetZFocal(3.5);
+    camera->SetApertureRadius(0.2);
+#endif
     return camera;
 }
 
@@ -21,7 +28,11 @@ std::shared_ptr<Scene> Assignment8::CreateScene() const
 
     // Objects
     std::vector<std::shared_ptr<aiMaterial>> loadedMaterials;
+#ifdef DO_DEPTH_OF_FIELD
+    std::vector<std::shared_ptr<MeshObject>> cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment6-Test.obj", &loadedMaterials);
+#else
     std::vector<std::shared_ptr<MeshObject>> cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment8.obj", &loadedMaterials);
+#endif
     for (size_t i = 0; i < cubeObjects.size(); ++i) {
         std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
         materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
@@ -35,10 +46,20 @@ std::shared_ptr<Scene> Assignment8::CreateScene() const
     newScene->AddSceneObject(cubeSceneObject);
 
     // Lights
+#if !defined(DO_DEPTH_OF_FIELD) || defined(DO_PHOTON_GATHERING)
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
     pointLight->SetPosition(glm::vec3(0.01909f, 0.0101f, 1.97028f));
     pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
     newScene->AddLight(pointLight);
+#endif
+    
+#if defined(DO_DEPTH_OF_FIELD)
+    std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>(glm::vec2(0.5f, 0.5f));
+    areaLight->SetSamplerAttributes(glm::vec3(2.f, 2.f, 1.f), 4);
+    areaLight->SetPosition(glm::vec3(0.01909f, 0.0101f, 1.97028f));
+    areaLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
+    newScene->AddLight(areaLight);
+#endif
 
     return newScene;
 
@@ -52,13 +73,25 @@ std::shared_ptr<ColorSampler> Assignment8::CreateSampler() const
 
 std::shared_ptr<class Renderer> Assignment8::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
+#ifdef DO_PHOTON_GATHERING
+    //return std::make_shared<BackwardRenderer>(scene, sampler);
+    std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
+    //photonRenderer->SetNumberOfDiffusePhotons(2000000);
+    photonRenderer->SetPhotonSphereRadius(0.03);
+    return photonRenderer;
+#else
     return std::make_shared<BackwardRenderer>(scene, sampler);
+#endif
 }
 
 int Assignment8::GetSamplesPerPixel() const
 {
     // ASSIGNMENT 5 TODO: Change the '1' here to increase the maximum number of samples used per pixel. (Part 1).
-    return 1; 
+#ifdef DO_DEPTH_OF_FIELD
+    return 16;
+#else
+    return 1;
+#endif
 }
 
 bool Assignment8::NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleIndex)

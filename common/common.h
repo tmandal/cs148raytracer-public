@@ -33,6 +33,12 @@ const float SMALL_EPSILON = 1e-7f;
 #define DISABLE_ACCELERATION_CREATION_TIMER 1
 
 
+// Utility function
+inline float RandFloat01()
+{
+    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+}
+
 #ifdef _WIN32
 #define make_unique std::make_unique
 #else

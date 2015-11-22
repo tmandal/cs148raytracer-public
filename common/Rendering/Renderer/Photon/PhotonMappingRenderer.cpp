@@ -11,19 +11,14 @@
 #include "common/Rendering/Material/Material.h"
 #include "glm/gtx/component_wise.hpp"
 
-#define VISUALIZE_PHOTON_MAPPING 1
+//#define VISUALIZE_PHOTON_MAPPING 1
 //#define PHOTON_MAPPING_DEBUG
-
-// Utility function
-float RandFloat01()
-{
-    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-}
 
 PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene, std::shared_ptr<class ColorSampler> sampler):
     BackwardRenderer(scene, sampler), 
     diffusePhotonNumber(1000000),
-    maxPhotonBounces(1000)
+    maxPhotonBounces(1000),
+    photonSphereRadius(0.003f)
 {
     srand(static_cast<unsigned int>(time(NULL)));
 }
@@ -44,7 +39,7 @@ void PhotonMappingRenderer::GenericPhotonMapGeneration(PhotonKdtree& photonMap, 
         if (!currentLight) {
             continue;
         }
-        totalLightIntensity = glm::length(currentLight->GetLightColor());
+        totalLightIntensity += glm::length(currentLight->GetLightColor());
     }
 
     // Shoot photons -- number of photons for light is proportional to the light's intensity relative to the total light intensity of the scene.
@@ -171,15 +166,52 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
     intersectionVirtualPhoton.position = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
 
     std::vector<Photon> foundPhotons;
-    diffuseMap.find_within_range(intersectionVirtualPhoton, 0.003f, std::back_inserter(foundPhotons));
+    diffuseMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundPhotons));
     if (!foundPhotons.empty()) {
         finalRenderColor += glm::vec3(1.f, 0.f, 0.f);
     }
+#else
+    if (intersection.hasIntersection) {
+        const MeshObject* parentObject = intersection.intersectedPrimitive->GetParentMeshObject();
+        assert(parentObject);
+        
+        const Material* objectMaterial = parentObject->GetMaterial();
+        assert(objectMaterial);
+        
+        // Compute the color at the intersection using gathering photons.
+        Photon intersectionVirtualPhoton;
+        intersectionVirtualPhoton.position = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
+        std::vector<Photon> foundPhotons;
+        diffuseMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundPhotons));
+        
+        glm::vec3   photoMapGatherColor;
+        for (size_t i = 0; i < foundPhotons.size(); ++i) {
+            const Photon&   photon = foundPhotons[i];
+            
+            // Note that the material should compute the parts of the lighting equation too.
+            //std::cout << "Photon : intensity = " << glm::to_string(photon.intensity) << ", ToLightRay = " << glm::to_string(photon.toLightRay.GetRayDirection()) <<  ", fromCameraRay=" << glm::to_string(fromCameraRay.GetRayDirection()) << std::endl;
+            // Do diffuse BRDF
+            const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, photon.intensity, photon.toLightRay, fromCameraRay, 1.0f, true, false);
+            //std::cout << "BRDF response due to neighboring photons - " << glm::to_string(brdfResponse) << std::endl;
+            photoMapGatherColor += brdfResponse;
+        }
+        photoMapGatherColor = photoMapGatherColor / (PI * photonSphereRadius * photonSphereRadius);
+        //std::cout << "Color gathered from photon map of " << foundPhotons.size() << " neighboring photons - " << glm::to_string(photoMapGatherColor) << std::endl;
+        finalRenderColor += photoMapGatherColor;
+    }
+    
+    
 #endif
+    
     return finalRenderColor;
 }
 
 void PhotonMappingRenderer::SetNumberOfDiffusePhotons(int diffuse)
 {
     diffusePhotonNumber = diffuse;
+}
+
+void PhotonMappingRenderer::SetPhotonSphereRadius(float radius)
+{
+    photonSphereRadius = radius;
 }
