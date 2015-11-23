@@ -13,6 +13,15 @@
 
 //#define VISUALIZE_PHOTON_MAPPING 1
 //#define PHOTON_MAPPING_DEBUG
+#define PHOTON_GATHERING_DEBUG
+
+// Utility
+float glm_max_component(glm::vec3 vector)
+{
+    return (vector.x > vector.y)
+        ? (vector.x > vector.z ? vector.x : vector.z)
+        : (vector.y > vector.z ? vector.y : vector.z);
+}
 
 PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene, std::shared_ptr<class ColorSampler> sampler):
     BackwardRenderer(scene, sampler), 
@@ -26,11 +35,12 @@ PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene,
 void PhotonMappingRenderer::InitializeRenderer()
 {
     // Generate Photon Maps
-    GenericPhotonMapGeneration(diffuseMap, diffusePhotonNumber);
+    GenericPhotonMapGeneration(diffusePhotonNumber);
     diffuseMap.optimise();
+    specularMap.optimise();
 }
 
-void PhotonMappingRenderer::GenericPhotonMapGeneration(PhotonKdtree& photonMap, int totalPhotons)
+void PhotonMappingRenderer::GenericPhotonMapGeneration(int totalPhotons)
 {
     float totalLightIntensity = 0.f;
     size_t totalLights = storedScene->GetTotalLights();
@@ -57,12 +67,12 @@ void PhotonMappingRenderer::GenericPhotonMapGeneration(PhotonKdtree& photonMap, 
             std::vector<char> path;
             path.push_back('L');
             currentLight->GenerateRandomPhotonRay(photonRay);
-            TracePhoton(photonMap, &photonRay, photonIntensity, path, 1.f, maxPhotonBounces);
+            TracePhoton(true, &photonRay, photonIntensity, path, 1.f, maxPhotonBounces);
         }
     }
 }
 
-void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces)
+void PhotonMappingRenderer::TracePhoton(bool specularPhotonPath, Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces)
 {
     /*
      * Assignment 7 TODO: Trace a photon into the scene and make it bounce.
@@ -85,30 +95,69 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
         const glm::vec3     intersectionPoint = state.intersectionRay.GetRayPosition(state.intersectionT);
         const MeshObject*   hitMeshObject = state.intersectedPrimitive->GetParentMeshObject();
         const Material*     hitMaterial = hitMeshObject->GetMaterial();
-        const glm::vec3     hitDiffuse = glm::normalize(hitMaterial->GetBaseDiffuseReflection());
-        const float         reflectProb = (hitDiffuse.x > hitDiffuse.y)
-                                ? (hitDiffuse.x > hitDiffuse.z ? hitDiffuse.x : hitDiffuse.z)
-                                : (hitDiffuse.y > hitDiffuse.z ? hitDiffuse.y : hitDiffuse.z);
-        float randProb = RandFloat01();
-
-#ifdef PHOTON_MAPPING_DEBUG
-        std::cout << "TracePhoton : hitDiffuse = " << glm::to_string(hitDiffuse) << " reflectProb = " << reflectProb << " randProb = " << randProb << std::endl;
+#if 0
+        const glm::vec3     hitDiffuse = hitMaterial->GetBaseDiffuseReflection();
+        const glm::vec3     hitSpecular = hitMaterial->IsReflective() ? hitMaterial->GetBaseSpecularReflection() : glm::vec3(0.0, 0.0, 0.0);
+        const glm::vec3     hitReflection = hitDiffuse + hitSpecular;
+        const float         probR = (hitReflection.x > hitReflection.y)
+                                ? (hitReflection.x > hitReflection.z ? hitReflection.x : hitReflection.z)
+                                : (hitReflection.y > hitReflection.z ? hitReflection.y : hitReflection.z);
+        const float         probD = probR * (hitDiffuse.x + hitDiffuse.y + hitDiffuse.z) / (hitReflection.x + hitReflection.y + hitReflection.z);
+#else
+        const glm::vec3     hitDiffuse = hitMaterial->GetBaseDiffuseReflection();
+        const glm::vec3     hitSpecular = hitMaterial->GetBaseSpecularReflection();
+        const float         probD = glm_max_component(hitDiffuse * lightIntensity)  / glm_max_component(lightIntensity);
+        const float         probS = glm_max_component(hitSpecular * lightIntensity) / glm_max_component(lightIntensity);
+        const float         probR = probD + probS;
 #endif
         
+        float               randProb = RandFloat01();
+        
+        bool                isReflection = (randProb < probR);
+        bool                isReflectionD = (randProb < probD);
+
+#ifdef PHOTON_MAPPING_DEBUG
+        //std::cout << "TracePhoton : hitDiffuse = " << glm::to_string(hitDiffuse) << " hitSpecular = " << glm::to_string(hitSpecular) << std::endl;
+        //std::cout << "TracePhoton : hitReflection = " << glm::to_string(hitReflection) << " reflectProb = " << probR << " randProb = " << randProb << std::endl;
+        //std::cout << "TracePhoton : reflectProb = " << probR << " randProb = " << randProb << std::endl;
+#endif
+        
+        // Exclude photons from direct illumination
         if (path.size() > 1)
         {
             Photon  photon;
             photon.position = intersectionPoint;
             photon.intensity = lightIntensity;
             photon.toLightRay = Ray(glm::vec3(photonRay->GetPosition()), -photonRay->GetRayDirection());
-            photonMap.insert(photon);
+#ifdef PHOTON_MAPPING_DEBUG
+            std::cout << "Added photon : specularPhotonPath = " << specularPhotonPath << " position = " << glm::to_string(intersectionPoint) << " intensity = " << glm::to_string(lightIntensity) << std::endl;
+#endif
+            // If it's purely specular photon, add it to specular map
+            if (specularPhotonPath)
+            {
+                specularMap.insert(photon);
+            }
+            // Always add the photon to diffuse map
+            diffuseMap.insert(photon);
         }
         
-        if (randProb < reflectProb)
+        if (isReflection)
         {
             // Scatter
             
-            path.push_back('R');
+            glm::vec3   newLightIntensity = lightIntensity;
+            
+            if (isReflectionD)
+            {
+                path.push_back('D');
+                newLightIntensity = lightIntensity * hitDiffuse / probD;
+                specularPhotonPath = false; // Diffuse reflection => no longer specular photon path
+            }
+            else
+            {
+                path.push_back('S');
+                newLightIntensity = lightIntensity * hitSpecular / probS;
+            }
             
             // Hemisphere sampling
             float   u1 = RandFloat01();
@@ -120,10 +169,10 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
             float   x = r * cosf(theta);
             float   y = r * sinf(theta);
             float   z = sqrt(1 - u1);
-            glm::vec3   drRayDirection = glm::normalize(glm::vec3(x, y, z));
+            glm::vec3   sampleRay = glm::normalize(glm::vec3(x, y, z));
 
 #ifdef PHOTON_MAPPING_DEBUG
-            std::cout << "Hemisphere sample ray direction = " << glm::to_string(drRayDirection) << std::endl;
+            //std::cout << "Hemisphere sample ray direction = " << glm::to_string(sampleRay) << std::endl;
 #endif
             
             // Normal, Tangent and Bitangent vector generation
@@ -141,20 +190,19 @@ void PhotonMappingRenderer::TracePhoton(PhotonKdtree& photonMap, Ray* photonRay,
             B = glm::normalize(B);
 
 #ifdef PHOTON_MAPPING_DEBUG
-            std::cout << "N = " << glm::to_string(N) << " T = " << glm::to_string(T) << " B = " << glm::to_string(B) << std::endl;
+            //std::cout << "N = " << glm::to_string(N) << " T = " << glm::to_string(T) << " B = " << glm::to_string(B) << std::endl;
 #endif
             
             glm::mat3   toWorldSpaceTransform = glm::mat3(T, B, N);
             
-            // Construct diffuse reflection ray
-            Ray diffuseReflectionRay;
+            // Construct  reflection ray
+            Ray reflectionRay;
             
-            diffuseReflectionRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * N);
-            diffuseReflectionRay.SetRayDirection(toWorldSpaceTransform * drRayDirection);
+            reflectionRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * N);
+            reflectionRay.SetRayDirection(toWorldSpaceTransform * sampleRay);
             
-            TracePhoton(photonMap, &diffuseReflectionRay, lightIntensity, path, currentIOR, remainingBounces-1);
+            TracePhoton(specularPhotonPath, &reflectionRay, newLightIntensity, path, currentIOR, remainingBounces-1);
         }
-        
     }
 }
 
@@ -181,23 +229,46 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
         // Compute the color at the intersection using gathering photons.
         Photon intersectionVirtualPhoton;
         intersectionVirtualPhoton.position = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
-        std::vector<Photon> foundPhotons;
-        diffuseMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundPhotons));
+        std::vector<Photon> foundDiffusePhotons;
+        diffuseMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundDiffusePhotons));
+        std::vector<Photon> foundSpecularPhotons;
+        specularMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundSpecularPhotons));
         
-        glm::vec3   photoMapGatherColor;
-        for (size_t i = 0; i < foundPhotons.size(); ++i) {
-            const Photon&   photon = foundPhotons[i];
+        glm::vec3   diffuseMapGatherColor;
+        for (size_t i = 0; i < foundDiffusePhotons.size(); ++i) {
+            const Photon&   photon = foundDiffusePhotons[i];
             
             // Note that the material should compute the parts of the lighting equation too.
             //std::cout << "Photon : intensity = " << glm::to_string(photon.intensity) << ", ToLightRay = " << glm::to_string(photon.toLightRay.GetRayDirection()) <<  ", fromCameraRay=" << glm::to_string(fromCameraRay.GetRayDirection()) << std::endl;
             // Do diffuse BRDF
             const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, photon.intensity, photon.toLightRay, fromCameraRay, 1.0f, true, false);
             //std::cout << "BRDF response due to neighboring photons - " << glm::to_string(brdfResponse) << std::endl;
-            photoMapGatherColor += brdfResponse;
+            diffuseMapGatherColor += brdfResponse;
         }
-        photoMapGatherColor = photoMapGatherColor / (PI * photonSphereRadius * photonSphereRadius);
-        //std::cout << "Color gathered from photon map of " << foundPhotons.size() << " neighboring photons - " << glm::to_string(photoMapGatherColor) << std::endl;
-        finalRenderColor += photoMapGatherColor;
+        diffuseMapGatherColor = diffuseMapGatherColor / (PI * photonSphereRadius * photonSphereRadius);
+#ifdef PHOTON_GATHERING_DEBUG
+        //if (foundDiffusePhotons.size() > 0)
+        //    std::cout << "Color gathered from photon map of " << foundDiffusePhotons.size() << " neighboring diffuse photons - " << glm::to_string(diffuseMapGatherColor) << std::endl;
+#endif
+        finalRenderColor += diffuseMapGatherColor;
+        
+        glm::vec3   specularMapGatherColor;
+        for (size_t i = 0; i < foundSpecularPhotons.size(); ++i) {
+            const Photon&   photon = foundSpecularPhotons[i];
+            
+            // Note that the material should compute the parts of the lighting equation too.
+            //std::cout << "Photon : intensity = " << glm::to_string(photon.intensity) << ", ToLightRay = " << glm::to_string(photon.toLightRay.GetRayDirection()) <<  ", fromCameraRay=" << glm::to_string(fromCameraRay.GetRayDirection()) << std::endl;
+            // Do specular BRDF
+            const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, photon.intensity, photon.toLightRay, fromCameraRay, 1.0f, true, false);
+            //std::cout << "BRDF response due to neighboring photons - " << glm::to_string(brdfResponse) << std::endl;
+            specularMapGatherColor += brdfResponse;
+        }
+        specularMapGatherColor = specularMapGatherColor / (PI * photonSphereRadius * photonSphereRadius);
+#ifdef PHOTON_GATHERING_DEBUG
+        if (foundSpecularPhotons.size() > 0)
+            std::cout << "Color gathered from photon map of " << foundSpecularPhotons.size() << " neighboring specular photons - " << glm::to_string(specularMapGatherColor) << std::endl;
+#endif
+        finalRenderColor += specularMapGatherColor;
     }
     
     

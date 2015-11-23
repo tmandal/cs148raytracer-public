@@ -26,6 +26,7 @@ std::shared_ptr<Scene> Assignment6::CreateScene() const
     for (size_t i = 0; i < cubeObjects.size(); ++i) {
         std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
         materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
+        materialCopy->SetAmbient(glm::vec3(0.0, 0.0, 0.0));
         cubeObjects[i]->SetMaterial(materialCopy);
 
         std::shared_ptr<SceneObject> cubeSceneObject = std::make_shared<SceneObject>();

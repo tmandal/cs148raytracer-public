@@ -35,14 +35,16 @@ newmtl floor
     Ka 0.7250 0.7100 0.6800
     Kd 0.7250 0.7100 0.6800
 	Ks 0 0 0
+    map_Kd checkerboard.png
 
 newmtl ceiling
     Ns 10.0000
     Ni 1.5000
     illum 2
-    Ka 0.7250 0.7100 0.6800
-    Kd 0.7250 0.7100 0.6800
+    Ka 0.161 0.133 0.427 # Blue
+    Kd 0.161 0.133 0.427
     Ks 0.0000 0.0000 0.0000
+    map_Kd checkerboard.png
 
 newmtl backWall
 	Ns 10.0000
@@ -74,7 +76,7 @@ newmtl light
 	Tr 0.0000
 	Tf 1.0000 1.0000 1.0000 
 	illum 2
-	Ka 0.7800 0.7800 0.7800
-	Kd 0.7800 0.7800 0.7800
+	Ka 0.8800 0.8800 0.8800
+	Kd 0.8800 0.8800 0.8800
     Ke 10 10 10
 	Ks 0 0 0

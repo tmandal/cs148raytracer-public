@@ -19,12 +19,13 @@ public:
 private:
     using PhotonKdtree = KDTree::KDTree<3, Photon, PhotonAccessor>;
     PhotonKdtree diffuseMap;
+    PhotonKdtree specularMap;
 
     int diffusePhotonNumber;
     int maxPhotonBounces;
     
     float photonSphereRadius;
 
-    void GenericPhotonMapGeneration(PhotonKdtree& photonMap, int totalPhotons);
-    void TracePhoton(PhotonKdtree& photonMap, Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces);
+    void GenericPhotonMapGeneration(int totalPhotons);
+    void TracePhoton(bool specularPhotonPath, Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces);
 };

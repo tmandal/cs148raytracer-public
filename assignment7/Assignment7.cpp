@@ -53,7 +53,10 @@ std::shared_ptr<ColorSampler> Assignment7::CreateSampler() const
 
 std::shared_ptr<class Renderer> Assignment7::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    return std::make_shared<PhotonMappingRenderer>(scene, sampler);
+    std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
+    //photonRenderer->SetNumberOfDiffusePhotons(2000000);
+    photonRenderer->SetPhotonSphereRadius(0.03);
+    return photonRenderer;
 }
 
 int Assignment7::GetSamplesPerPixel() const
