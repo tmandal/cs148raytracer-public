@@ -58,6 +58,7 @@ bool Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersection) co
             Ray refractionRay;
             PerformRayRefraction(refractionRay, *inputRay, intersectionPoint, NdR, *outputIntersection, targetIOR);
             outputIntersection->refractionIntersection->currentIOR = targetIOR;
+            //std::cout << "Refraction trace : remainingBounces=" <<  outputIntersection->remainingRefractionBounces - 1 << " inputRay - position=" << glm::to_string(inputRay->GetPosition()) << ", direction=" << glm::to_string(inputRay->GetRayDirection()) << "refractionRay - position=" << glm::to_string(refractionRay.GetPosition()) << ", direction=" << glm::to_string(refractionRay.GetRayDirection()) << std::endl;
             Trace(&refractionRay, outputIntersection->refractionIntersection.get());
         }
     }
@@ -76,7 +77,7 @@ void Scene::PerformRaySpecularReflection(Ray& outputRay, const Ray& inputRay, co
 void Scene::PerformRayRefraction(Ray& outputRay, const Ray& inputRay, const glm::vec3& intersectionPoint, const float NdR, const IntersectionState& state, float& targetIOR) const
 {
     const glm::vec3 refractionDir = inputRay.RefractRay(state.ComputeNormal(), state.currentIOR, targetIOR);
-    outputRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * state.ComputeNormal());
+    outputRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * refractionDir);
     outputRay.SetRayDirection(refractionDir);
 }
 

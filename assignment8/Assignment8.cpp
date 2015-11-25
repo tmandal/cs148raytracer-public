@@ -3,6 +3,7 @@
 
 //#define DO_DEPTH_OF_FIELD
 #define DO_PHOTON_GATHERING
+#define PHOTON_GATHERING_USES_SPHERE
 
 std::shared_ptr<Camera> Assignment8::CreateCamera() const
 {
@@ -31,15 +32,25 @@ std::shared_ptr<Scene> Assignment8::CreateScene() const
 #ifdef DO_DEPTH_OF_FIELD
     std::vector<std::shared_ptr<MeshObject>> cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment6-Test.obj", &loadedMaterials);
 #elif defined(DO_PHOTON_GATHERING)
+
+#ifdef PHOTON_GATHERING_USES_SPHERE
     std::vector<std::shared_ptr<MeshObject>> cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Sphere.obj", &loadedMaterials);
+#else
+    std::vector<std::shared_ptr<MeshObject>> cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment8.obj", &loadedMaterials);
+#endif
+
 #else
     std::vector<std::shared_ptr<MeshObject>> cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment8.obj", &loadedMaterials);
 #endif
     for (size_t i = 0; i < cubeObjects.size(); ++i) {
         std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
         materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
-        if (i < 2)
+#ifdef PHOTON_GATHERING_USES_SPHERE
+        if (i == 0)
             materialCopy->SetReflectivity(0.6);
+        else if (i == 1)
+            materialCopy->SetTransmittance(0.6);
+#endif
         cubeObjects[i]->SetMaterial(materialCopy);
     }
 
@@ -53,7 +64,13 @@ std::shared_ptr<Scene> Assignment8::CreateScene() const
 #if !defined(DO_DEPTH_OF_FIELD) || defined(DO_PHOTON_GATHERING)
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
 #if defined(DO_PHOTON_GATHERING)
+
+#ifdef PHOTON_GATHERING_USES_SPHERE
+    pointLight->SetPosition(glm::vec3(0.f, 0.f, 1.57f));
+#else
     pointLight->SetPosition(glm::vec3(0.01909f, 0.0101f, 1.97028f));
+#endif
+
 #else
     pointLight->SetPosition(glm::vec3(0.01909f, 0.0101f, 1.97028f));
 #endif
@@ -82,10 +99,11 @@ std::shared_ptr<ColorSampler> Assignment8::CreateSampler() const
 std::shared_ptr<class Renderer> Assignment8::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
 #ifdef DO_PHOTON_GATHERING
-    return std::make_shared<BackwardRenderer>(scene, sampler);
+    //return std::make_shared<BackwardRenderer>(scene, sampler);
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
     photonRenderer->SetPhotonSphereRadius(0.03);
+    photonRenderer->SetPhotonGatherMultiplier(4.0);
     return photonRenderer;
 #else
     return std::make_shared<BackwardRenderer>(scene, sampler);
@@ -109,12 +127,20 @@ bool Assignment8::NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleInd
 
 int Assignment8::GetMaxReflectionBounces() const
 {
+#if defined(DO_PHOTON_GATHERING) && defined(PHOTON_GATHERING_USES_SPHERE)
     return 2;
+#else
+    return 0;
+#endif
 }
 
 int Assignment8::GetMaxRefractionBounces() const
 {
+#if defined(DO_PHOTON_GATHERING) && defined(PHOTON_GATHERING_USES_SPHERE)
     return 4;
+#else
+    return 0;
+#endif
 }
 
 glm::vec2 Assignment8::GetImageOutputResolution() const

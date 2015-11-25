@@ -13,7 +13,7 @@
 
 //#define VISUALIZE_PHOTON_MAPPING 1
 //#define PHOTON_MAPPING_DEBUG
-#define PHOTON_GATHERING_DEBUG
+//#define PHOTON_GATHERING_DEBUG
 
 // Utility
 float glm_max_component(glm::vec3 vector)
@@ -27,7 +27,8 @@ PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene,
     BackwardRenderer(scene, sampler), 
     diffusePhotonNumber(1000000),
     maxPhotonBounces(1000),
-    photonSphereRadius(0.003f)
+    photonSphereRadius(0.003f),
+    photonGatherMultiplier(1.0f)
 {
     srand(static_cast<unsigned int>(time(NULL)));
 }
@@ -250,7 +251,7 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
         //if (foundDiffusePhotons.size() > 0)
         //    std::cout << "Color gathered from photon map of " << foundDiffusePhotons.size() << " neighboring diffuse photons - " << glm::to_string(diffuseMapGatherColor) << std::endl;
 #endif
-        finalRenderColor += diffuseMapGatherColor;
+        finalRenderColor += diffuseMapGatherColor * photonGatherMultiplier;
         
         glm::vec3   specularMapGatherColor;
         for (size_t i = 0; i < foundSpecularPhotons.size(); ++i) {
@@ -268,7 +269,7 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
         if (foundSpecularPhotons.size() > 0)
             std::cout << "Color gathered from photon map of " << foundSpecularPhotons.size() << " neighboring specular photons - " << glm::to_string(specularMapGatherColor) << std::endl;
 #endif
-        finalRenderColor += specularMapGatherColor;
+        finalRenderColor += specularMapGatherColor * photonGatherMultiplier;
     }
     
     
@@ -285,4 +286,9 @@ void PhotonMappingRenderer::SetNumberOfDiffusePhotons(int diffuse)
 void PhotonMappingRenderer::SetPhotonSphereRadius(float radius)
 {
     photonSphereRadius = radius;
+}
+
+void PhotonMappingRenderer::SetPhotonGatherMultiplier(float multiplier)
+{
+    photonGatherMultiplier = multiplier;
 }
