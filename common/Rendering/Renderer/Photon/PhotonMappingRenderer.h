@@ -15,6 +15,7 @@ public:
     glm::vec3 ComputeSampleColor(const struct IntersectionState& intersection, const class Ray& fromCameraRay) const override;
 
     void SetNumberOfDiffusePhotons(int diffuse);
+    void SetNumberOfSpecularPhotons(int specular);
     void SetPhotonSphereRadius(float radius);
     void SetPhotonGatherMultiplier(float multiplier);
 private:
@@ -23,11 +24,18 @@ private:
     PhotonKdtree specularMap;
 
     int diffusePhotonNumber;
+    int specularPhotonNumber;
     int maxPhotonBounces;
     
     float photonSphereRadius;
     float photonGatherMultiplier;
 
+    std::pair<int, glm::vec3> GetPhotonIntensity(const class Light* currentLight, int totalPhotons);
+
     void GenericPhotonMapGeneration(int totalPhotons);
+    void SpecularPhotonMapGeneration(int totalPhotons);
+
     void TracePhoton(bool specularPhotonPath, Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces);
+    void TraceSpecularPhoton(Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces);
+
 };

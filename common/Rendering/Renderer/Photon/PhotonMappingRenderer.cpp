@@ -23,9 +23,19 @@ float glm_max_component(glm::vec3 vector)
         : (vector.y > vector.z ? vector.y : vector.z);
 }
 
+glm::vec3 rand_point(const Box& box)
+{
+    float   xShift = RandFloat01();
+    float   yShift = RandFloat01();
+    float   zShift = RandFloat01();
+
+    return (box.minVertex + glm::vec3(xShift, yShift, zShift) * (box.maxVertex - box.minVertex));
+}
+
 PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene, std::shared_ptr<class ColorSampler> sampler):
     BackwardRenderer(scene, sampler), 
     diffusePhotonNumber(1000000),
+    specularPhotonNumber(500000),
     maxPhotonBounces(1000),
     photonSphereRadius(0.003f),
     photonGatherMultiplier(1.0f)
@@ -37,15 +47,15 @@ void PhotonMappingRenderer::InitializeRenderer()
 {
     // Generate Photon Maps
     GenericPhotonMapGeneration(diffusePhotonNumber);
+    SpecularPhotonMapGeneration(specularPhotonNumber);
     diffuseMap.optimise();
     specularMap.optimise();
 }
 
-void PhotonMappingRenderer::GenericPhotonMapGeneration(int totalPhotons)
+std::pair<int, glm::vec3> PhotonMappingRenderer::GetPhotonIntensity(const class Light* currentLight, int totalPhotons)
 {
     float totalLightIntensity = 0.f;
-    size_t totalLights = storedScene->GetTotalLights();
-    for (size_t i = 0; i < totalLights; ++i) {
+    for (size_t i = 0; i < storedScene->GetTotalLights(); ++i) {
         const Light* currentLight = storedScene->GetLightObject(i);
         if (!currentLight) {
             continue;
@@ -53,22 +63,79 @@ void PhotonMappingRenderer::GenericPhotonMapGeneration(int totalPhotons)
         totalLightIntensity += glm::length(currentLight->GetLightColor());
     }
 
+    const float proportion = glm::length(currentLight->GetLightColor()) / totalLightIntensity;
+    const int totalPhotonsForLight = static_cast<const int>(proportion * (diffusePhotonNumber + specularPhotonNumber));
+    int totalPhotonsToEmit = static_cast<const int>(proportion * totalPhotons);
+    glm::vec3 photonIntensity = currentLight->GetLightColor() / static_cast<float>(totalPhotonsForLight);
+
+    return  std::make_pair(totalPhotonsToEmit, photonIntensity);
+}
+
+void PhotonMappingRenderer::GenericPhotonMapGeneration(int totalPhotons)
+{
     // Shoot photons -- number of photons for light is proportional to the light's intensity relative to the total light intensity of the scene.
-    for (size_t i = 0; i < totalLights; ++i) {
+    for (size_t i = 0; i < storedScene->GetTotalLights(); ++i) {
         const Light* currentLight = storedScene->GetLightObject(i);
         if (!currentLight) {
             continue;
         }
 
-        const float proportion = glm::length(currentLight->GetLightColor()) / totalLightIntensity;
-        const int totalPhotonsForLight = static_cast<const int>(proportion * totalPhotons);
-        const glm::vec3 photonIntensity = currentLight->GetLightColor() / static_cast<float>(totalPhotonsForLight);
+        std::pair<int, glm::vec3>   pkg = GetPhotonIntensity(currentLight, totalPhotons);
+        const int totalPhotonsForLight = pkg.first;
+        const glm::vec3 photonIntensity = pkg.second;
         for (int j = 0; j < totalPhotonsForLight; ++j) {
             Ray photonRay;
             std::vector<char> path;
             path.push_back('L');
             currentLight->GenerateRandomPhotonRay(photonRay);
             TracePhoton(true, &photonRay, photonIntensity, path, 1.f, maxPhotonBounces);
+        }
+    }
+}
+
+void PhotonMappingRenderer::SpecularPhotonMapGeneration(int totalPhotons)
+{
+    // Get a list of specular objects 
+    std::vector<std::pair<const MeshObject*, const SceneObject*>>      specularMeshObjects;
+    for (size_t i = 0; i < storedScene->GetTotalObjects(); ++i) {
+        const SceneObject&  sceneObject = storedScene->GetSceneObject(i);
+        for (int j = 0; j < sceneObject.GetTotalMeshObjects(); ++j) {
+            const MeshObject*   meshObject = sceneObject.GetMeshObject(j);
+            assert(meshObject);
+            const Material*     objectMaterial = meshObject->GetMaterial();
+            assert(objectMaterial);
+            if (objectMaterial->IsReflective() || objectMaterial->IsTransmissive()) {
+                specularMeshObjects.push_back(std::make_pair(meshObject, &sceneObject));
+            }
+        }
+    }
+
+    // Early return if no specular objects are found
+    if (specularMeshObjects.size() == 0)
+        return;
+
+    for (size_t i = 0; i < storedScene->GetTotalLights(); ++i) {
+        const Light* currentLight = storedScene->GetLightObject(i);
+        if (!currentLight) {
+            continue;
+        }
+
+        std::pair<int, glm::vec3>   pkg = GetPhotonIntensity(currentLight, totalPhotons);
+        const int totalPhotonsForLight = pkg.first;
+        const glm::vec3 photonIntensity = pkg.second;
+        for (int j = 0; j < totalPhotonsForLight; ++j) {
+            Ray photonRay;
+            std::vector<char> path;
+            path.push_back('L');
+            currentLight->GenerateRandomPhotonRay(photonRay);
+            // Modify photon ray direction to point towards a specular object
+            size_t  objIndex = rand() % specularMeshObjects.size();
+            Box     objBBox = specularMeshObjects[objIndex].first->GetBoundingBox();
+            glm::vec4   randObjPoint = specularMeshObjects[objIndex].second->GetObjectToWorldMatrix() * glm::vec4(rand_point(objBBox), 1.f);
+            photonRay.SetRayDirection(glm::normalize(glm::vec3(randObjPoint - photonRay.GetPosition())));
+            // TODO : Redo initial photon ray construction if it does not hit a specular object
+
+            TraceSpecularPhoton(&photonRay, photonIntensity, path, 1.f, maxPhotonBounces);
         }
     }
 }
@@ -134,7 +201,7 @@ void PhotonMappingRenderer::TracePhoton(bool specularPhotonPath, Ray* photonRay,
             std::cout << "Added photon : specularPhotonPath = " << specularPhotonPath << " position = " << glm::to_string(intersectionPoint) << " intensity = " << glm::to_string(lightIntensity) << std::endl;
 #endif
             // If it's purely specular photon, add it to specular map
-            if (specularPhotonPath)
+            if (specularPhotonPath && isReflectionD)
             {
                 specularMap.insert(photon);
             }
@@ -207,17 +274,104 @@ void PhotonMappingRenderer::TracePhoton(bool specularPhotonPath, Ray* photonRay,
     }
 }
 
+void PhotonMappingRenderer::TraceSpecularPhoton(Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces)
+{
+    if (remainingBounces < 0)
+        return;
+
+    assert(photonRay);
+    IntersectionState state(0, 0);
+    state.currentIOR = currentIOR;
+    
+    if (storedScene->Trace(photonRay, &state))
+    {
+        const glm::vec3     intersectionPoint = state.intersectionRay.GetRayPosition(state.intersectionT);
+        const MeshObject*   hitMeshObject = state.intersectedPrimitive->GetParentMeshObject();
+        const Material*     hitMaterial = hitMeshObject->GetMaterial();
+
+        const float         probSR = hitMaterial->GetReflectivity();
+        const float         probST = hitMaterial->GetTransmittance();
+        const float         probS = probSR + probST;
+        
+        float               randProb = RandFloat01();
+        
+        bool                isSpecular  = (randProb < probS);
+        bool                isSpecularR = (randProb < probSR);
+
+#ifdef PHOTON_MAPPING_DEBUG
+        //std::cout << "TracePhoton : reflectProb = " << probR << " randProb = " << randProb << std::endl;
+#endif
+        
+        // Exclude photons from direct illumination
+        if (path.size() > 1 && probS < SMALL_EPSILON)
+        {
+            Photon  photon;
+            photon.position = intersectionPoint;
+            photon.intensity = lightIntensity;
+            photon.toLightRay = Ray(glm::vec3(photonRay->GetPosition()), -photonRay->GetRayDirection());
+#ifdef PHOTON_MAPPING_DEBUG
+            std::cout << "Added specular photon : position = " << glm::to_string(intersectionPoint) << " intensity = " << glm::to_string(lightIntensity) << std::endl;
+#endif
+            // If it's purely specular photon, add it to specular map
+            specularMap.insert(photon);
+        }
+        
+        if (isSpecular)
+        {
+            // Scatter
+            
+            glm::vec3   newLightIntensity = lightIntensity;
+            Ray         outputPhotonRay;
+            float       targetIOR = currentIOR;
+            const float NdR = glm::dot(photonRay->GetRayDirection(), state.ComputeNormal());
+            
+            if (isSpecularR)
+            {
+                // Specular reflection
+                path.push_back('R');
+                newLightIntensity = lightIntensity * probSR;
+                // Reflect incoming photon ray
+                const glm::vec3 normal = (NdR > SMALL_EPSILON) ? -1.f * state.ComputeNormal() : state.ComputeNormal();
+                const glm::vec3 reflectionDir = glm::reflect(photonRay->GetRayDirection(), normal);
+                outputPhotonRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * state.ComputeNormal());
+                outputPhotonRay.SetRayDirection(reflectionDir);
+            }
+            else
+            {
+                // Specular transmission
+                path.push_back('T');
+                newLightIntensity = lightIntensity * probST;
+                // Refract incoming photon ray
+                targetIOR = (NdR < SMALL_EPSILON) ? hitMaterial->GetIOR() : 1.f;
+                const glm::vec3 refractionDir = photonRay->RefractRay(state.ComputeNormal(), currentIOR, targetIOR);
+                outputPhotonRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * refractionDir);
+                outputPhotonRay.SetRayDirection(refractionDir);
+            }
+            
+            TraceSpecularPhoton(&outputPhotonRay, newLightIntensity, path, targetIOR, remainingBounces-1);
+        }
+    }
+}
+
+
 glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionState& intersection, const class Ray& fromCameraRay) const
 {
-    glm::vec3 finalRenderColor = BackwardRenderer::ComputeSampleColor(intersection, fromCameraRay);
+    glm::vec3 finalRenderColor;
+    finalRenderColor += BackwardRenderer::ComputeSampleColor(intersection, fromCameraRay);
 #if VISUALIZE_PHOTON_MAPPING
     Photon intersectionVirtualPhoton;
     intersectionVirtualPhoton.position = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
 
-    std::vector<Photon> foundPhotons;
-    diffuseMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundPhotons));
-    if (!foundPhotons.empty()) {
+    std::vector<Photon> foundDiffusePhotons;
+    diffuseMap.find_within_range(intersectionVirtualPhoton, 0.003f, std::back_inserter(foundDiffusePhotons));
+    if (!foundDiffusePhotons.empty()) {
         finalRenderColor += glm::vec3(1.f, 0.f, 0.f);
+    }
+
+    std::vector<Photon> foundSpecularPhotons;
+    specularMap.find_within_range(intersectionVirtualPhoton, 0.003f, std::back_inserter(foundSpecularPhotons));
+    if (!foundSpecularPhotons.empty()) {
+        finalRenderColor += glm::vec3(0.f, 1.f, 0.f);
     }
 #else
     if (intersection.hasIntersection) {
@@ -281,6 +435,11 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
 void PhotonMappingRenderer::SetNumberOfDiffusePhotons(int diffuse)
 {
     diffusePhotonNumber = diffuse;
+}
+
+void PhotonMappingRenderer::SetNumberOfSpecularPhotons(int specular)
+{
+    specularPhotonNumber = specular;
 }
 
 void PhotonMappingRenderer::SetPhotonSphereRadius(float radius)

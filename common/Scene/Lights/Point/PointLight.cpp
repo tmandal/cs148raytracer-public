@@ -1,12 +1,5 @@
 #include "common/Scene/Lights/Point/PointLight.h"
 
-float RandFloat()
-{
-    float r = -1.0f + static_cast <float> (rand()) / static_cast <float> (RAND_MAX/2);
-    
-    return r;
-}
-
 void PointLight::ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, glm::vec3 normal) const
 {
     origin += normal * LARGE_EPSILON;
@@ -32,9 +25,9 @@ void PointLight::GenerateRandomPhotonRay(Ray& ray) const
     
     do
     {
-        x = RandFloat();
-        y = RandFloat();
-        z = RandFloat();
+        x = -1.f + 2.f * RandFloat01();
+        y = -1.f + 2.f * RandFloat01();
+        z = -1.f + 2.f * RandFloat01();
     } while (x*x+y*y+z*z > 1.0f);
     
     ray.SetRayDirection(glm::normalize(glm::vec3(x, y, z)));

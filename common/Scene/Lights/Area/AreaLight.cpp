@@ -22,14 +22,15 @@ void AreaLight::ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, gl
         const glm::vec3 rayDirection = glm::normalize(lightPosition - origin);
         const float distanceToOrigin = glm::distance(origin, lightPosition);
         output.emplace_back(origin, rayDirection, distanceToOrigin);
+
+        ++sampleState->samplesComputed;
     }
-    
 }
 
 float AreaLight::ComputeLightAttenuation(glm::vec3 origin) const
 {
     const glm::vec3 lightToPoint = glm::normalize(origin - glm::vec3(GetPosition()));
-    if (glm::dot(lightToPoint, glm::vec3(GetForwardDirection())) < -SMALL_EPSILON) {
+    if (glm::dot(lightToPoint, glm::vec3(GetForwardDirection())) < -LARGE_EPSILON) {
         return 0.f;
     }
     return 1.f / static_cast<float>(samplesToUse);
@@ -37,6 +38,32 @@ float AreaLight::ComputeLightAttenuation(glm::vec3 origin) const
 
 void AreaLight::GenerateRandomPhotonRay(Ray& ray) const
 {
+    std::random_device rd;
+    std::unique_ptr<SamplerState> sampleState = sampler->CreateSampler(rd, samplesToUse, 2);
+    sampleState->samplesComputed = rand() % sampleState->maxSamples;
+    glm::vec3 rayPos = sampler->ComputeSampleCoordinate(*sampleState.get()) - 0.5f;
+    rayPos.x *= lightSize.x;
+    rayPos.y *= lightSize.y;
+    rayPos.z = 0.f;
+
+    const glm::vec3 lightPosition = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(rayPos, 1.f));
+
+    ray.SetRayPosition(lightPosition);
+
+    // Hemisphere sampling
+    float   u1 = RandFloat01();
+    float   u2 = RandFloat01();
+    
+    float   r = sqrtf(u1);
+    float   theta = 2 * PI * u2;
+    
+    float   x = r * cosf(theta);
+    float   y = r * sinf(theta);
+    float   z = -sqrt(1 - u1);
+
+    const glm::vec3 lightDirection = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(glm::vec3(x, y, z), 1.f));
+    
+    ray.SetRayDirection(glm::normalize(lightDirection));
 }
 
 void AreaLight::SetSamplerAttributes(glm::ivec3 inputGridSize, int numSamples)

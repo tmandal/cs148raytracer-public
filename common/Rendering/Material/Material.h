@@ -19,6 +19,7 @@ public:
 
     void SetReflectivity(float input);
     bool IsReflective() const { return reflectivity > SMALL_EPSILON; }
+    float GetReflectivity() const { return reflectivity; }
 
     void SetTransmittance(float input);
     bool IsTransmissive() const { return transmittance > SMALL_EPSILON; }
