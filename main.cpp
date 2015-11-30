@@ -1,6 +1,6 @@
 #include "common/RayTracer.h"
 
-#define ASSIGNMENT 8
+//#define ASSIGNMENT 8
 #if ASSIGNMENT == 5
 #define APPLICATION Assignment5
 #include "assignment5/Assignment5.h"
@@ -14,8 +14,13 @@
 #define APPLICATION Assignment8
 #include "assignment8/Assignment8.h"
 #else
+#if 0
 #define APPLICATION Scanline
 #include "scanline/Scanline.h"
+#else
+#define APPLICATION RtImage
+#include "rtimage/RtImage.h"
+#endif
 #endif
 
 #ifdef _WIN32

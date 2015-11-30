@@ -3,7 +3,7 @@
 #include "common/Scene/Geometry/Ray/Ray.h"
 #include "common/Intersection/IntersectionState.h"
 
-const float SceneObject::MINIMUM_SCALE = 0.01f;
+const float SceneObject::MINIMUM_SCALE = 0.0001f;
 
 SceneObject::SceneObject():
     worldToObjectMatrix(1.f), objectToWorldMatrix(1.f), position(0.f, 0.f, 0.f, 1.f), rotation(1.f, 0.f, 0.f, 0.f), scale(1.f), nameSet(false)

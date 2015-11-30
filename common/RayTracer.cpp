@@ -29,6 +29,20 @@ void RayTracer::Run()
     // After this call, we are guaranteed that the "acceleration" member of the scene and all scene objects within the scene will be non-NULL.
     currentScene->GenerateDefaultAccelerationData();
     currentScene->Finalize();
+    
+    for (size_t i = 0; i < currentScene->GetTotalObjects(); ++i)
+    {
+        const SceneObject& sceneObject = currentScene->GetSceneObject(i);
+        std::cout << "Bounding box of scene object " << i << "  : minVtx = " << glm::to_string(sceneObject.GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(sceneObject.GetBoundingBox().maxVertex) << std::endl;
+#if 0
+        for (size_t j = 0; j < sceneObject.GetTotalMeshObjects(); ++j)
+        {
+            const MeshObject*   meshObject = sceneObject.GetMeshObject(j);
+            std::cout << "    Bounding box of mesh object " << j << " named as " << meshObject->GetName() << " : minVtx = " << glm::to_string(meshObject->GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(meshObject->GetBoundingBox().maxVertex) << std::endl;
+        }
+#endif
+    }
+    
 
     currentRenderer->InitializeRenderer();
 

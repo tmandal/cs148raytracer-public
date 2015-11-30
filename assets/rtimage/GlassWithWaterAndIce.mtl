@@ -1,0 +1,63 @@
+# Blender MTL File: 'GlassWithWaterAndIce.blend'
+# Material Count: 6
+
+# material : Ice used by ice cubes
+newmtl Ice
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.3098
+d 0.001
+illum 2
+
+# material : Material.001 used by glass
+newmtl Material.001
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.53
+d 0.08
+illum 2
+
+# material : Material.002 used by floor plane
+newmtl Material.002
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd checkerboard.png
+map_Ks checkerboard.png
+
+# material : Material.004 used by back and right planes
+newmtl Material.004
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+
+# material : Material.005 used by water
+newmtl Material.005
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.3325
+d 0.002
+illum 2
+
+newmtl None
+Ns 0
+Ka 0.000000 0.000000 0.000000
+Kd 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+Ni 1.0
+d  0.0
+illum 2
