@@ -101,13 +101,13 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         switch(i)
         {
             case 0 :
-                cubeSceneObject->Translate(glm::vec3(-2.f, 5.0f, -0.425f));
+                cubeSceneObject->Translate(glm::vec3(-2.f, 5.5f, -0.425f));
                 break;
             case 1 :
-                cubeSceneObject->Translate(glm::vec3( 0.f, 5.0f, -0.425f));
+                cubeSceneObject->Translate(glm::vec3( 0.f, 6.0f, -0.425f));
                 break;
             case 2 :
-                cubeSceneObject->Translate(glm::vec3(1.7f, 5.0f, -0.425f));
+                cubeSceneObject->Translate(glm::vec3(1.7f, 5.5f, -0.425f));
                 break;
         }
         cubeSceneObject->CreateAccelerationData(AccelerationTypes::BVH);
@@ -119,8 +119,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     // Lights
 #if 1
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-    pointLight->SetPosition(glm::vec3(-1.0f, 4.0f, 4.0f));
-    pointLight->SetPosition(glm::vec3(0.0f, 3.0f, 4.0f));
+    pointLight->SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
     pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
     newScene->AddLight(pointLight);
 #endif
@@ -145,7 +144,7 @@ std::shared_ptr<ColorSampler> RtImage::CreateSampler() const
 
 std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    return std::make_shared<BackwardRenderer>(scene, sampler);
+    //return std::make_shared<BackwardRenderer>(scene, sampler);
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
     photonRenderer->SetPhotonSphereRadius(0.03);
@@ -155,7 +154,7 @@ std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> s
 
 int RtImage::GetSamplesPerPixel() const
 {
-    return 1;
+    return 16;
 }
 
 bool RtImage::NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleIndex)

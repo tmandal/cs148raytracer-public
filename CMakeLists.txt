@@ -64,8 +64,8 @@ file(GLOB_RECURSE ASSIGNMENT_HEADERS "./assignment*/*.h")
 file(GLOB_RECURSE INSTRUCTOR_SOURCES "./instructor/*.cpp")
 file(GLOB_RECURSE INSTRUCTOR_HEADERS "./instructor/*.h")
 
-file(GLOB_RECURSE STUDENT_SOURCES "./noise/*.cpp" "./scanline/*.cpp")
-file(GLOB_RECURSE STUDENT_HEADERS "./noise/*.h" "./scanline/*.h")
+file(GLOB_RECURSE STUDENT_SOURCES "./noise/*.cpp" "./scanline/*.cpp" "./rtimage/*.cpp")
+file(GLOB_RECURSE STUDENT_HEADERS "./noise/*.h" "./scanline/*.h" "./rtimage/*.h")
 
 # Path to Assets
 add_definitions("-DASSET_PATH=${CMAKE_CURRENT_SOURCE_DIR}/assets")
