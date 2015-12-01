@@ -69,6 +69,11 @@ public:
     {
         return parentMesh;
     }
+    
+    virtual glm::vec3 GetVertexPosition(int index) const override
+    {
+        return positions[index];
+    }
 
     virtual bool HasVertexNormals() const override
     {

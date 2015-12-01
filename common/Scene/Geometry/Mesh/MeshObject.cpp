@@ -24,6 +24,11 @@ void MeshObject::AddPrimitive(std::shared_ptr<PrimitiveBase> newPrimitive)
     elements.emplace_back(std::move(newPrimitive));
 }
 
+const class PrimitiveBase* MeshObject::GetPrimitive(int index) const
+{
+    return elements[index].get();
+}
+
 void MeshObject::Finalize()
 {
     boundingBox.Reset();

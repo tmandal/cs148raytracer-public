@@ -14,6 +14,9 @@ public:
     void SetName(const std::string& input);
     std::string GetName() const { return meshName; }
     void AddPrimitive(std::shared_ptr<class PrimitiveBase> newPrimitive);
+    virtual int GetTotalPrimitives() const { return static_cast<int>(elements.size()); }
+    virtual const class PrimitiveBase* GetPrimitive(int index) const;
+    
     virtual void CreateAccelerationData(AccelerationTypes perObjectType);
 
     virtual Box GetBoundingBox() const override
