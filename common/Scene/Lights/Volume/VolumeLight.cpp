@@ -32,6 +32,7 @@ void VolumeLight::ComputeTriangleAreas()
 
 void VolumeLight::ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, glm::vec3 normal) const
 {
+    assert(GetTotalMeshObjects() > 0);
     origin += normal * LARGE_EPSILON;
     for (int i = 0; i < samplesToUse; ++i)
     {
@@ -43,7 +44,7 @@ void VolumeLight::ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, 
         const glm::vec3         lightPosition = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(sample, 1.f));
         const glm::vec3         rayDirection = glm::normalize(lightPosition - origin);
         const glm::vec3         lightNormal = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(primitive->GetPrimitiveNormal(), 1.f));
-        if (glm::dot(rayDirection, lightNormal) < - SMALL_EPSILON)
+        if (true || glm::dot(rayDirection, lightNormal) < - SMALL_EPSILON)
         {
             output.emplace_back(origin, rayDirection);
         }
@@ -62,6 +63,8 @@ float VolumeLight::ComputeLightAttenuation(glm::vec3 origin) const
 
 void VolumeLight::GenerateRandomPhotonRay(Ray& ray) const
 {
+    assert(GetTotalMeshObjects() > 0);
+    
     size_t                  m = rand()%GetTotalMeshObjects();
     const MeshObject*       meshObject = GetMeshObject(m);
     size_t                  p = rand()%meshObject->GetTotalPrimitives();
@@ -76,11 +79,11 @@ void VolumeLight::GenerateRandomPhotonRay(Ray& ray) const
     float   u2 = RandFloat01();
     
     float   r = sqrtf(u1);
-    float   theta = 2 * PI * u2;
+    float   theta = PI * u2;
     
     float   x = r * cosf(theta);
     float   y = r * sinf(theta);
-    float   z = -sqrt(1 - u1);
+    float   z = sqrt(1 - u1);
     
     // Normal, Tangent and Bitangent vector generation
     glm::vec3   N = glm::normalize(primitive->GetPrimitiveNormal());

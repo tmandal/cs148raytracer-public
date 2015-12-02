@@ -115,9 +115,80 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     }
 #endif
     
+#if 1
+    loadedMaterials.clear();
+    // CornellBox-Assignment8 has BB : (-1, -1, 0) -> (1, 1, 2)
+    //cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment8.obj", &loadedMaterials);
+    cubeObjects = MeshLoader::LoadMesh("rtimage/Flame.obj", &loadedMaterials);
+    
+    for (size_t i = 0; i < cubeObjects.size(); ++i) {
+        std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
+        materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
+        cubeObjects[i]->SetMaterial(materialCopy);
+        
+        aiString matName;
+        loadedMaterials[i]->Get(AI_MATKEY_NAME, matName);
+        std::cout << "Flame : Mesh object index - " << i << " name - " << cubeObjects[i]->GetName() << " , material name - " << std::string(matName.C_Str()) << std::endl;
+    }
+    
+    for (size_t i = 0; i < 3; ++i)
+    {
+        std::shared_ptr<SceneObject> cubeSceneObject = std::make_shared<SceneObject>();
+        cubeSceneObject->AddMeshObject(cubeObjects);
+        cubeSceneObject->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
+        cubeSceneObject->MultScale(1/60.f);
+        cubeSceneObject->Translate(glm::vec3(3.f, 0.f, -1.f));
+        switch(i)
+        {
+            case 0 :
+                cubeSceneObject->Translate(glm::vec3(-0.75f, 0.f, 0.27f));
+                break;
+            case 1 :
+                cubeSceneObject->Translate(glm::vec3(0.175f, 0.f, 0.52f));
+                break;
+            case 2 :
+                cubeSceneObject->Translate(glm::vec3(1.08f, 0.f, 0.27f));
+                break;
+        }
+        
+        cubeSceneObject->CreateAccelerationData(AccelerationTypes::BVH);
+        //newScene->AddSceneObject(cubeSceneObject);
+    }
+    
+    for (size_t i = 2; i < 3; ++i)
+    {
+        std::shared_ptr<VolumeLight> volumeLight = std::make_shared<VolumeLight>();
+        volumeLight->AddMeshObject(cubeObjects[2]);
+        volumeLight->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
+        volumeLight->MultScale(1/60.f);
+        volumeLight->Translate(glm::vec3(3.f, 0.f, -1.f));
+        switch(i)
+        {
+            case 0 :
+                volumeLight->Translate(glm::vec3(-0.75f, 0.f, 0.27f));
+                break;
+            case 1 :
+                volumeLight->Translate(glm::vec3(0.175f, 0.f, 0.52f));
+                break;
+            case 2 :
+                volumeLight->Translate(glm::vec3(1.08f, 0.f, 0.27f));
+                break;
+        }
+        volumeLight->CreateAccelerationData(AccelerationTypes::BVH);
+        volumeLight->Finalize();
+        volumeLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
+        //volumeLight->SetLightColor(glm::vec3(226.f/255.f, 88.f/255.f, 34.f/255.f));
+        volumeLight->SetNumSamples(8);
+        newScene->AddLight(volumeLight);
+        
+        //std::cout << "Bounding box of volume light " << i << "  : minVtx = " << glm::to_string(volumeLight->GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(volumeLight->GetBoundingBox().maxVertex) << std::endl;
+        
+    }
+#endif
+    
 
     // Lights
-#if 1
+#if 0
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
     pointLight->SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
     pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
@@ -144,7 +215,7 @@ std::shared_ptr<ColorSampler> RtImage::CreateSampler() const
 
 std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    //return std::make_shared<BackwardRenderer>(scene, sampler);
+    return std::make_shared<BackwardRenderer>(scene, sampler);
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
     photonRenderer->SetPhotonSphereRadius(0.03);
@@ -154,7 +225,7 @@ std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> s
 
 int RtImage::GetSamplesPerPixel() const
 {
-    return 16;
+    return 1;
 }
 
 bool RtImage::NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleIndex)
