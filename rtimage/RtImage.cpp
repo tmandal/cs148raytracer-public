@@ -44,6 +44,14 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     for (size_t i = 0; i < cubeObjects.size(); ++i) {
         std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
         materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
+        
+        // Make the floor reflectant
+        //if (i == 17)
+        //    materialCopy->SetReflectivity(0.5);
+        // Make glass reflectant
+        //if (i == 18)
+        //    materialCopy->SetReflectivity(0.1);
+        
         cubeObjects[i]->SetMaterial(materialCopy);
         
         aiString matName;
@@ -53,7 +61,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
     cubeObjects.erase(cubeObjects.begin() + 20);
 
-#if 1
+#if 0
     cubeObjects.erase(cubeObjects.begin() + 19);    // water flow
 #endif
 
@@ -61,11 +69,11 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     cubeObjects.erase(cubeObjects.begin() + 18);    // glass
 #endif
 
-#if 1
+#if 0
     cubeObjects.erase(cubeObjects.begin() + 14);    // ice sphere
 #endif
 
-#if 1
+#if 0
     cubeObjects.erase(cubeObjects.begin() + 12);    // ice cube
     cubeObjects.erase(cubeObjects.begin() + 10);    // ice cube
     cubeObjects.erase(cubeObjects.begin() +  8);    // ice cube
@@ -74,7 +82,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     cubeObjects.erase(cubeObjects.begin() +  2);    // ice cube
 #endif
 
-#if 1
+#if 0
     cubeObjects.erase(cubeObjects.begin() +  1);    // water splash
     cubeObjects.erase(cubeObjects.begin() +  0);    // water splash
 #endif
@@ -213,18 +221,19 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
 
     // Lights
-#if 1
+#if 0
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-    pointLight->SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
-    pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
+    pointLight->SetPosition(glm::vec3(0.0f, 3.0f, 6.0f));
+    pointLight->SetLightColor(glm::vec3(244.f/255.f, 255.f/255.f, 250.f/255.f));    // std fluorescent
+    //pointLight->SetLightColor(glm::vec3(255.f/255.f, 241.f/255.f, 224.f/255.f));    // halogen
     newScene->AddLight(pointLight);
 #endif
     
-#if 0
+#if 1
     std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>(glm::vec2(1.0f, 1.0f));
     areaLight->SetSamplerAttributes(glm::vec3(2.f, 2.f, 1.f), 8);
-    areaLight->SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
-    areaLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
+    areaLight->SetPosition(glm::vec3(0.0f, 0.0f, 6.0f));
+    areaLight->SetLightColor(glm::vec3(244.f/255.f, 255.f/255.f, 250.f/255.f));
     newScene->AddLight(areaLight);
 #endif
 
@@ -240,7 +249,7 @@ std::shared_ptr<ColorSampler> RtImage::CreateSampler() const
 
 std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    return std::make_shared<BackwardRenderer>(scene, sampler);
+    //return std::make_shared<BackwardRenderer>(scene, sampler);
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
     photonRenderer->SetPhotonSphereRadius(0.03);
