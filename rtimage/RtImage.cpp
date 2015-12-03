@@ -52,7 +52,32 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     }
     
     cubeObjects.erase(cubeObjects.begin() + 20);
-    //cubeObjects.erase(cubeObjects.begin() + 19, cubeObjects.end());
+
+#if 1
+    cubeObjects.erase(cubeObjects.begin() + 19);    // water flow
+#endif
+
+#if 0
+    cubeObjects.erase(cubeObjects.begin() + 18);    // glass
+#endif
+
+#if 1
+    cubeObjects.erase(cubeObjects.begin() + 14);    // ice sphere
+#endif
+
+#if 1
+    cubeObjects.erase(cubeObjects.begin() + 12);    // ice cube
+    cubeObjects.erase(cubeObjects.begin() + 10);    // ice cube
+    cubeObjects.erase(cubeObjects.begin() +  8);    // ice cube
+    cubeObjects.erase(cubeObjects.begin() +  6);    // ice cube
+    cubeObjects.erase(cubeObjects.begin() +  4);    // ice cube
+    cubeObjects.erase(cubeObjects.begin() +  2);    // ice cube
+#endif
+
+#if 1
+    cubeObjects.erase(cubeObjects.begin() +  1);    // water splash
+    cubeObjects.erase(cubeObjects.begin() +  0);    // water splash
+#endif
 
     std::shared_ptr<SceneObject> cubeSceneObject = std::make_shared<SceneObject>();
     cubeSceneObject->AddMeshObject(cubeObjects);
@@ -152,10 +177,10 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         }
         
         cubeSceneObject->CreateAccelerationData(AccelerationTypes::BVH);
-        //newScene->AddSceneObject(cubeSceneObject);
+        newScene->AddSceneObject(cubeSceneObject);
     }
     
-    for (size_t i = 2; i < 3; ++i)
+    for (size_t i = 3; i < 3; ++i)
     {
         std::shared_ptr<VolumeLight> volumeLight = std::make_shared<VolumeLight>();
         volumeLight->AddMeshObject(cubeObjects[2]);
@@ -188,7 +213,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
 
     // Lights
-#if 0
+#if 1
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
     pointLight->SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
     pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
@@ -197,8 +222,8 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
 #if 0
     std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>(glm::vec2(1.0f, 1.0f));
-    areaLight->SetSamplerAttributes(glm::vec3(2.f, 2.f, 1.f), 4);
-    areaLight->SetPosition(glm::vec3(-1.f, 4.f, 4.f));
+    areaLight->SetSamplerAttributes(glm::vec3(2.f, 2.f, 1.f), 8);
+    areaLight->SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
     areaLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
     newScene->AddLight(areaLight);
 #endif
