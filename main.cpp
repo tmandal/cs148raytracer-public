@@ -31,7 +31,15 @@
 
 int main(int argc, char** argv)  
 {
+    unsigned int seed = static_cast<unsigned int>(time(NULL));
+    srand(seed);
+    std::cout << "Using seed : " << seed << std::endl;
+    std::string outputFilename = "output.png";
+    if (argc > 1)
+        outputFilename = argv[1];
+
     std::unique_ptr<APPLICATION> currentApplication = make_unique<APPLICATION>();
+    currentApplication->SetOutputFilename(outputFilename);
     RayTracer rayTracer(std::move(currentApplication));
 
     DIAGNOSTICS_TIMER(timer, "Ray Tracer");

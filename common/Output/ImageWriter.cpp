@@ -1,5 +1,6 @@
 #include "common/Output/ImageWriter.h"
 #include <locale>
+#include <fstream>
 
 using namespace std;
 
@@ -93,5 +94,26 @@ void ImageWriter::SaveImage()
         // At this point we have saved successfully
         // Make sure m_pOutBitmap is NULL so we don't try to save it again
         m_pOutBitmap = NULL;
+    }
+}
+
+void ImageWriter::SaveHDRImage()
+{
+    std::string hdrFileName(m_sFileName);
+    size_t indx = hdrFileName.find_last_of(".");
+    if (indx != string::npos)
+        hdrFileName.replace(indx+1, std::string::npos, "bin");
+    else
+        hdrFileName.append(".bin");
+
+    ofstream    fout;
+    fout.open(hdrFileName.c_str(), ios::out | ios::binary);
+    for (int y = 0; y < mHeight; ++y) {
+        for (int x = 0; x < mWidth; ++x) {
+            int linearIdx = y * mWidth + x;
+            fout.write((const char*)&mHDRData[linearIdx].x, sizeof(float));
+            fout.write((const char*)&mHDRData[linearIdx].y, sizeof(float));
+            fout.write((const char*)&mHDRData[linearIdx].z, sizeof(float));
+        }
     }
 }

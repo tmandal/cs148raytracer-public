@@ -7,6 +7,7 @@ enum class AccelerationTypes;
 class Application : public std::enable_shared_from_this<Application>
 {
 public:
+    Application() : outputFilename("output.png") {}
     virtual ~Application() {}
     virtual std::shared_ptr<class Camera> CreateCamera() const = 0;
     virtual std::shared_ptr<class Scene> CreateScene() const = 0;
@@ -28,7 +29,8 @@ public:
 
     // Postprocessing
     virtual void PerformImagePostprocessing(class ImageWriter& imageWriter);
-
+    virtual void SetOutputFilename(std::string filename)    { outputFilename = filename; }
     virtual std::string GetOutputFilename() const;
 private:
+    std::string outputFilename;
 };
