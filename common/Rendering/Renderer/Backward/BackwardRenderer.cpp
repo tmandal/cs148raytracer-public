@@ -5,6 +5,7 @@
 #include "common/Scene/Geometry/Primitives/Primitive.h"
 #include "common/Scene/Geometry/Mesh/MeshObject.h"
 #include "common/Rendering/Material/Material.h"
+#include "common/Rendering/Media/Media.h"
 #include "common/Intersection/IntersectionState.h"
 
 BackwardRenderer::BackwardRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) :
@@ -44,13 +45,13 @@ glm::vec3 BackwardRenderer::ComputeSampleColor(const IntersectionState& intersec
             IntersectionState shadowRayX(0, 1000);  // To allow penetrating media
             HitStatus hitStatus = storedScene->Trace(&sampleRays[s], &shadowRayX, true);
             float mediaAttenuation = 1.0;
-            if (hitStatus == HIT_OBJECTS) {
+            if (hitStatus == HitStatus::HIT_OBJECTS) {
                 continue;
-            } else if (hitStatus == HIT_PARTICIPATING_MEDIA_ONLY)   {
+            } else if (hitStatus == HitStatus::HIT_MEDIA_ONLY)   {
                 const MeshObject* mediaObject = shadowRayX.intersectedPrimitive->GetParentMeshObject();
                 assert(mediaObject);
                 assert(mediaObject->IsMedia());
-                mediaAttenuation = mediaObject->GetMedia()->ComputeLightAttenuation(shadowRayX);
+                mediaAttenuation = mediaObject->GetMedia()->ComputeLightAttenuation(&shadowRayX);
             }
             const float lightAttenuation = light->ComputeLightAttenuation(intersectionPoint) * mediaAttenuation;
 

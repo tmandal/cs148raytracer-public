@@ -8,7 +8,7 @@ public:
     Media(glm::vec3 voxelGridSize, float spacing);
     virtual ~Media();
 
-    float ComputeLightAttenuation(IntersectionState* xState);
+    float ComputeLightAttenuation(const struct IntersectionState* xState) const;
 
 private:
     glm::vec3   voxelGridSize;

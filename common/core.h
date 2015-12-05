@@ -13,6 +13,7 @@
 #include "common/Scene/Lights/Volume/VolumeLight.h"
 #include "common/Scene/Lights/Directional/DirectionalLight.h"
 #include "common/Rendering/Material/BlinnPhong/BlinnPhongMaterial.h"
+#include "common/Rendering/Media/Media.h"
 #include "common/Utility/Mesh/Loading/MeshLoader.h"
 #include "common/Utility/Texture/TextureLoader.h"
 #include "common/Rendering/Textures/Texture2D.h"

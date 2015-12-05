@@ -69,7 +69,7 @@ void RayTracer::Run()
                 assert(cameraRay);
 
                 IntersectionState rayIntersection(storedApplication->GetMaxReflectionBounces(), storedApplication->GetMaxRefractionBounces());
-                bool didHitScene = currentScene->Trace(cameraRay.get(), &rayIntersection);
+                bool didHitScene = currentScene->Trace(cameraRay.get(), &rayIntersection) != HitStatus::HIT_NONE;
 
                 // Use the intersection data to compute the BRDF response.
                 glm::vec3 sampleColor;

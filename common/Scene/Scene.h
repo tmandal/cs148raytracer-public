@@ -11,7 +11,7 @@ enum class HitStatus
 {
     HIT_NONE = 0,
     HIT_OBJECTS,
-    HIT_PARTICIPATING_MEDIA_ONLY,
+    HIT_MEDIA_ONLY,
 };
 
 class Scene : public std::enable_shared_from_this<Scene>

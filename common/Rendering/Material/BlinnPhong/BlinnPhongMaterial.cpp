@@ -31,7 +31,7 @@ glm::vec3 BlinnPhongMaterial::ComputeDiffuse(const IntersectionState& intersecti
 
 glm::vec3 BlinnPhongMaterial::ComputeSpecular(const IntersectionState& intersection, const glm::vec3& lightColor, const float NdL, const float NdH, const float NdV, const float VdH) const
 {
-    const glm::vec3 useSpecularColor = (textureStorage.find("specularTexture") != textureStorage.end()) ? glm::vec3(textureStorage.at("specularTexture")->Sample(intersection.ComputeUV())) : specularColor;
+    //const glm::vec3 useSpecularColor = (textureStorage.find("specularTexture") != textureStorage.end()) ? glm::vec3(textureStorage.at("specularTexture")->Sample(intersection.ComputeUV())) : specularColor;
     const float highlight = std::pow(NdH, shininess);
     const glm::vec3 specularResponse = highlight * specularColor * lightColor;
     return specularResponse;

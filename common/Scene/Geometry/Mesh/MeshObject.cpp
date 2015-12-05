@@ -11,7 +11,8 @@ MeshObject::MeshObject() :
 }
 
 MeshObject::MeshObject(std::shared_ptr<Material> inputMaterial) :
-    storedMaterial(std::move(inputMaterial))
+    storedMaterial(std::move(inputMaterial)),
+    storedMedia(nullptr)
 {
 }
 
@@ -59,6 +60,21 @@ const Material* MeshObject::GetMaterial() const
 void MeshObject::SetMaterial(std::shared_ptr<Material> inputMaterial)
 {
     storedMaterial = std::move(inputMaterial);
+}
+
+const Media* MeshObject::GetMedia() const
+{
+    return storedMedia.get();
+}
+
+void MeshObject::SetMedia(std::shared_ptr<class Media> inputMedia)
+{
+    storedMedia = std::move(inputMedia);
+}
+
+bool MeshObject::IsMedia() const
+{
+    return (storedMedia != nullptr);
 }
 
 void MeshObject::SetName(const std::string& input)

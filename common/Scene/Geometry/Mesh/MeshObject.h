@@ -26,6 +26,10 @@ public:
 
     virtual void SetMaterial(std::shared_ptr<class Material> inputMaterial);
     virtual const class Material* GetMaterial() const;
+    
+    virtual void SetMedia(std::shared_ptr<class Media> inputMedia);
+    virtual const class Media* GetMedia() const;
+    virtual bool IsMedia() const;
 
     virtual bool Trace(const class SceneObject* parentObject, class Ray* inputRay, struct IntersectionState* outputIntersection) const override;
 
@@ -38,5 +42,6 @@ protected:
 
 private:
     std::shared_ptr<class Material> storedMaterial;
+    std::shared_ptr<class Media>    storedMedia;
     std::string meshName;
 };

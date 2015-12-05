@@ -157,7 +157,7 @@ void PhotonMappingRenderer::TracePhoton(bool specularPhotonPath, Ray* photonRay,
     IntersectionState state(0, 0);
     state.currentIOR = currentIOR;
     
-    if (storedScene->Trace(photonRay, &state))
+    if (storedScene->Trace(photonRay, &state) != HitStatus::HIT_NONE)
     {
         const glm::vec3     intersectionPoint = state.intersectionRay.GetRayPosition(state.intersectionT);
         const MeshObject*   hitMeshObject = state.intersectedPrimitive->GetParentMeshObject();
@@ -282,7 +282,7 @@ void PhotonMappingRenderer::TraceSpecularPhoton(Ray* photonRay, glm::vec3 lightI
     IntersectionState state(0, 0);
     state.currentIOR = currentIOR;
     
-    if (storedScene->Trace(photonRay, &state))
+    if (storedScene->Trace(photonRay, &state) != HitStatus::HIT_NONE)
     {
         const glm::vec3     intersectionPoint = state.intersectionRay.GetRayPosition(state.intersectionT);
         const MeshObject*   hitMeshObject = state.intersectedPrimitive->GetParentMeshObject();

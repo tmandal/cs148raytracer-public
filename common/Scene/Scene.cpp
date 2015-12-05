@@ -31,7 +31,7 @@ HitStatus Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersectio
     DIAGNOSTICS_STAT(DiagnosticsType::RAYS_CREATED);
 
     bool didIntersect = acceleration->Trace(nullptr, inputRay, outputIntersection);
-    HitStatus   indirectHitStatus = HIT_NONE;
+    HitStatus   indirectHitStatus = HitStatus::HIT_NONE;
     if (outputIntersection != nullptr && didIntersect) {
         const MeshObject* intersectedMesh = outputIntersection->intersectedPrimitive->GetParentMeshObject();
         assert(intersectedMesh);
@@ -39,7 +39,7 @@ HitStatus Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersectio
         assert(currentMaterial);
 
         // Trace through the object if it's not a shadow ray of it's participating media
-        if (!isShadowRay || intersectedMesh->isParticipatingMedia())    {
+        if (!isShadowRay || intersectedMesh->IsMedia())    {
 
             const glm::vec3 intersectionPoint = outputIntersection->intersectionRay.GetRayPosition(outputIntersection->intersectionT);
             const float NdR = glm::dot(inputRay->GetRayDirection(), outputIntersection->ComputeNormal());
@@ -69,12 +69,12 @@ HitStatus Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersectio
     }
 
     if (didIntersect)
-        if (outputIntersection != nullptr && intersectedMesh->isParticipatingMedia() && indirectHitStatus != HIT_OBJECTS)
-            return HIT_PARTICIPATING_MEDIA_ONLY;
+        if (outputIntersection != nullptr && outputIntersection->intersectedPrimitive->GetParentMeshObject()->IsMedia() && indirectHitStatus != HitStatus::HIT_OBJECTS)
+            return HitStatus::HIT_MEDIA_ONLY;
         else
-            return HIT_OBJECTS;
+            return HitStatus::HIT_OBJECTS;
     else
-        return HIT_NONE;
+        return HitStatus::HIT_NONE;
 }
 
 void Scene::PerformRaySpecularReflection(Ray& outputRay, const Ray& inputRay, const glm::vec3& intersectionPoint, const float NdR, const IntersectionState& state) const
