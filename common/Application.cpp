@@ -4,7 +4,7 @@
 
 std::string Application::GetOutputFilename() const
 {
-    return "output.png";
+    return outputFilename;
 }
 
 int Application::GetSamplesPerPixel() const

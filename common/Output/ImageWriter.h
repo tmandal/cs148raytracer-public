@@ -22,6 +22,8 @@ public:
     // Explicit Call to Finish and Save File -- Otherwise done at destructor
     void SaveImage();
 
+    void SaveHDRImage();
+
 private:
     // File name that we want to output to
     std::string m_sFileName;

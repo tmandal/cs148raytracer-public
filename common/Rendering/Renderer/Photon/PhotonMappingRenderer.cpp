@@ -40,7 +40,6 @@ PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene,
     photonSphereRadius(0.003f),
     photonGatherMultiplier(1.0f)
 {
-    srand(static_cast<unsigned int>(time(NULL)));
 }
 
 void PhotonMappingRenderer::InitializeRenderer()
