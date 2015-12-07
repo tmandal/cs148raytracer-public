@@ -3,6 +3,7 @@
 #include "common/Intersection/IntersectionState.h"
 #include "common/Scene/Lights/Light.h"
 #include "assimp/material.h"
+#include "common/Rendering/Textures/Texture2D.h"
 
 Material::Material():
     reflectivity(0.f), transmittance(0.f), indexOfRefraction(1.f)
@@ -23,9 +24,10 @@ Texture* Material::GetTexture(const std::string& id) const
 
 glm::vec3 Material::ComputeNonLightDependentBRDF(const class Renderer* renderer, const struct IntersectionState& intersection) const
 {
+    const glm::vec3 useAmbientColor = (textureStorage.find("ambientTexture") != textureStorage.end()) ? glm::vec3(textureStorage.at("ambientTexture")->Sample(intersection.ComputeUV())) : ambient;
     const glm::vec3 reflectionColor = ComputeReflection(renderer, intersection);
     const glm::vec3 transmissionColor = ComputeTransmission(renderer, intersection);
-    return reflectivity * reflectionColor + transmittance * transmissionColor + ambient;
+    return reflectivity * reflectionColor + transmittance * transmissionColor + useAmbientColor;
 }
 
 glm::vec3 Material::ComputeBRDF(const struct IntersectionState& intersection, const glm::vec3& lightColor, const class Ray& toLightRay, const class Ray& fromCameraRay, float lightAttenuation, bool computeDiffuse, bool computeSpecular) const
@@ -73,6 +75,11 @@ glm::vec3 Material::ComputeTransmission(const class Renderer* renderer, const st
         transmissionColor = renderer->ComputeSampleColor(*intersection.refractionIntersection.get(), intersection.refractionIntersection->intersectionRay);
     }
     return transmissionColor;
+}
+
+glm::vec3 Material::ComputeTransmissiveAttenuation() const
+{
+    return GetBaseDiffuseReflection() * (1 - transmittance);
 }
 
 void Material::SetReflectivity(float input)

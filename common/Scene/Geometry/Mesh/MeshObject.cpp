@@ -77,6 +77,13 @@ bool MeshObject::IsMedia() const
     return (storedMedia != nullptr);
 }
 
+void MeshObject::ScalePrimitiveUV(glm::vec2 scale)
+{
+    for (size_t i = 0; i < elements.size(); ++i) {
+        elements[i]->ScaleVertexUV(scale);
+    }
+}
+
 void MeshObject::SetName(const std::string& input)
 {
     meshName = input;

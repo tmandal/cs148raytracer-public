@@ -40,6 +40,18 @@ public:
         uvs[index] = uv;
         hasUVs = true;
     }
+    
+    virtual void ScaleVertexUV(glm::vec2 scale) override
+    {
+        assert(hasUVs == true);
+        for (int index = 0; index < N; ++index)
+        {
+            glm::vec2   old_uv = uvs[index];
+            //uvs[index] = glm::fract(uvs[index] * scale);
+            uvs[index] = uvs[index] * scale;
+            std::cout << "Old UV : " << glm::to_string(old_uv) << " New UV : " << glm::to_string(uvs[index]) << std::endl;
+        }
+    }
 
     virtual void SetVertexTangentBitangent(int index, glm::vec3 tangent, glm::vec3 bitangent) override
     {

@@ -6,9 +6,14 @@
 std::shared_ptr<Camera> RtImage::CreateCamera() const
 {
     const glm::vec2 resolution = GetImageOutputResolution();
+#if 1
     std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
-    camera->SetPosition(glm::vec3(0.f, -4.1469f, 0.73693f));
-    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.0f);
+    camera->SetPosition(glm::vec3(0.5f, -4.f, 2.f));
+#else
+    std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 58.f);
+    camera->SetPosition(glm::vec3(0.5f, -8.f, 2.f));
+#endif
+    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.0f - PI/12.f);
     
     // For depth of field
     //camera->SetZFocal(3.5);
@@ -22,214 +27,102 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     std::shared_ptr<Scene> newScene = std::make_shared<Scene>();
 
     // Material
-    std::shared_ptr<BlinnPhongMaterial> cubeMaterial = std::make_shared<BlinnPhongMaterial>();
-    cubeMaterial->SetDiffuse(glm::vec3(1.f, 1.f, 1.f));
-    cubeMaterial->SetSpecular(glm::vec3(0.6f, 0.6f, 0.6f), 40.f);
-    //cubeMaterial->SetReflectivity(0.001);
+    std::shared_ptr<BlinnPhongMaterial> defaultMaterial = std::make_shared<BlinnPhongMaterial>();
+    defaultMaterial->SetDiffuse(glm::vec3(1.f, 1.f, 1.f));
+    defaultMaterial->SetSpecular(glm::vec3(0.6f, 0.6f, 0.6f), 40.f);
+    //defaultMaterial->SetReflectivity(0.001);
 
     // Objects
-    std::vector<std::shared_ptr<aiMaterial>> loadedMaterials;
-    std::vector<std::shared_ptr<MeshObject>> cubeObjects;
+    std::vector<std::shared_ptr<aiMaterial>> rtMaterials;
+    std::vector<std::shared_ptr<MeshObject>> rtObjects;
     
-#if 1
-    // CornellBox-Assignment8 has BB : (-1, -1, 0) -> (1, 1, 2)
-    //cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment8.obj", &loadedMaterials);
-    cubeObjects = MeshLoader::LoadMesh("rtimage/GlassWithWaterAndIce.obj", &loadedMaterials);
-    // material : Ice used by ice cubes
-    // material : Material.001 used by glass (and possibly internals of glass)
-    // material : Material.002 used by floor plane
-    // material : Material.004 used by back and right planes
-    // material : Material.005 used by water
-
-    for (size_t i = 0; i < cubeObjects.size(); ++i) {
-        std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
-        materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
-        
-        // Make the floor reflectant
-        //if (i == 17)
-        //    materialCopy->SetReflectivity(0.5);
-        // Make glass reflectant
-        //if (i == 18)
-        //    materialCopy->SetReflectivity(0.1);
-        
-        cubeObjects[i]->SetMaterial(materialCopy);
+    rtObjects = MeshLoader::LoadMesh("rtimage/RT2.obj", &rtMaterials);
+    
+    for (size_t i = 0; i < rtObjects.size(); ++i) {
+        std::shared_ptr<Material> materialCopy = defaultMaterial->Clone();
+        materialCopy->LoadMaterialFromAssimp(rtMaterials[i]);
         
         aiString matName;
-        loadedMaterials[i]->Get(AI_MATKEY_NAME, matName);
-        std::cout << "GlassWithWaterAndIce : Mesh object index - " << i << " name - " << cubeObjects[i]->GetName() << " , material name - " << std::string(matName.C_Str()) << std::endl;
-    }
-    
-    cubeObjects.erase(cubeObjects.begin() + 20);
-
-#if 0
-    cubeObjects.erase(cubeObjects.begin() + 19);    // water flow
-#endif
-
-#if 0
-    cubeObjects.erase(cubeObjects.begin() + 18);    // glass
-#endif
-
-#if 0
-    cubeObjects.erase(cubeObjects.begin() + 14);    // ice sphere
-#endif
-
-#if 0
-    cubeObjects.erase(cubeObjects.begin() + 12);    // ice cube
-    cubeObjects.erase(cubeObjects.begin() + 10);    // ice cube
-    cubeObjects.erase(cubeObjects.begin() +  8);    // ice cube
-    cubeObjects.erase(cubeObjects.begin() +  6);    // ice cube
-    cubeObjects.erase(cubeObjects.begin() +  4);    // ice cube
-    cubeObjects.erase(cubeObjects.begin() +  2);    // ice cube
-#endif
-
-#if 0
-    cubeObjects.erase(cubeObjects.begin() +  1);    // water splash
-    cubeObjects.erase(cubeObjects.begin() +  0);    // water splash
-#endif
-
-    std::shared_ptr<SceneObject> cubeSceneObject = std::make_shared<SceneObject>();
-    cubeSceneObject->AddMeshObject(cubeObjects);
-    cubeSceneObject->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
-    cubeSceneObject->MultScale(0.3);
-    cubeSceneObject->Translate(glm::vec3(-0.7f, 1.6f, 0.f));
-    cubeSceneObject->CreateAccelerationData(AccelerationTypes::BVH);
-    newScene->AddSceneObject(cubeSceneObject);
-#endif
-    
-#if 1
-    loadedMaterials.clear();
-    cubeObjects = MeshLoader::LoadMesh("rtimage/candlesObj.obj", &loadedMaterials);
-    
-    for (size_t i = 0; i < cubeObjects.size(); ++i) {
-        std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
-        materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
-        /*
-        if (i <= 5)
-            materialCopy->SetAmbient(glm::vec3(1.f, 0.f, 0.f));
-        else if (i <= 10)
-            materialCopy->SetAmbient(glm::vec3(0.f, 1.f, 0.f));
-        else
-            materialCopy->SetAmbient(glm::vec3(0.f, 0.f, 1.f));
-         */
-        if (i%5 == 0)   // candle stand object
+        rtMaterials[i]->Get(AI_MATKEY_NAME, matName);
+        std::string matNameStr = std::string(matName.C_Str());
+        
+        if (matNameStr.compare("FloorSG") == 0)
+        {
+            materialCopy->SetReflectivity(0.1);
+            materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/Marble.jpg"));
+            materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/Marble.jpg"));
+        }
+        else if (matNameStr.compare("WindowFrameSG") == 0)
+        {
+            materialCopy->SetReflectivity(0.1);
+            materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/WindowFrameWood.jpg"));
+            materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/WindowFrameWood.jpg"));
+        }
+        else if (matNameStr.compare("WindowGlassSG") == 0)
+        {
+            materialCopy->SetReflectivity(0.2);
+            materialCopy->SetTransmittance(0.7);
+        }
+        else if (matNameStr.compare("WineGlassSG") == 0)
+        {
+            materialCopy->SetReflectivity(0.2);
+            materialCopy->SetTransmittance(0.8);
+        }
+        else if (matNameStr.compare("WineLiquidSG") == 0)
+        {
+            materialCopy->SetTransmittance(0.99);
+        }
+        else if (matNameStr.compare("WindowHandleSG") == 0)
+        {
             materialCopy->SetReflectivity(0.5);
-        cubeObjects[i]->SetMaterial(materialCopy);
-        
-        aiString matName;
-        loadedMaterials[i]->Get(AI_MATKEY_NAME, matName);
-        std::cout << "candlesObj : Mesh object index - " << i << " name - " << cubeObjects[i]->GetName() << " , material name - " << std::string(matName.C_Str()) << std::endl;
-    }
-    
-    cubeObjects.erase(cubeObjects.begin() + 0);
-    //cubeObjects.erase(cubeObjects.begin() + 19, cubeObjects.end());
-    
-    for (size_t i = 0; i < 3; ++i)
-    {
-        std::shared_ptr<SceneObject> cubeSceneObject = std::make_shared<SceneObject>();
-        size_t  candleIndex = (i == 2) ? 0 : i; // Use first candle as third candle too
-        for (size_t j = 0; j < 5; ++j)
-            cubeSceneObject->AddMeshObject(cubeObjects[5*candleIndex+j]);
-        cubeSceneObject->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
-        cubeSceneObject->MultScale(1/750.0f);
-        switch(i)
-        {
-            case 0 :
-                cubeSceneObject->Translate(glm::vec3(-2.f, 5.5f, -0.425f));
-                break;
-            case 1 :
-                cubeSceneObject->Translate(glm::vec3( 0.f, 6.0f, -0.425f));
-                break;
-            case 2 :
-                cubeSceneObject->Translate(glm::vec3(1.7f, 5.5f, -0.425f));
-                break;
         }
-        cubeSceneObject->CreateAccelerationData(AccelerationTypes::BVH);
-        newScene->AddSceneObject(cubeSceneObject);
-    }
-#endif
-    
-#if 1
-    loadedMaterials.clear();
-    // CornellBox-Assignment8 has BB : (-1, -1, 0) -> (1, 1, 2)
-    //cubeObjects = MeshLoader::LoadMesh("CornellBox/CornellBox-Assignment8.obj", &loadedMaterials);
-    cubeObjects = MeshLoader::LoadMesh("rtimage/Flame.obj", &loadedMaterials);
-    
-    for (size_t i = 0; i < cubeObjects.size(); ++i) {
-        std::shared_ptr<Material> materialCopy = cubeMaterial->Clone();
-        materialCopy->LoadMaterialFromAssimp(loadedMaterials[i]);
-        cubeObjects[i]->SetMaterial(materialCopy);
-        
-        aiString matName;
-        loadedMaterials[i]->Get(AI_MATKEY_NAME, matName);
-        std::cout << "Flame : Mesh object index - " << i << " name - " << cubeObjects[i]->GetName() << " , material name - " << std::string(matName.C_Str()) << std::endl;
-    }
-    
-    for (size_t i = 0; i < 3; ++i)
-    {
-        std::shared_ptr<SceneObject> cubeSceneObject = std::make_shared<SceneObject>();
-        cubeSceneObject->AddMeshObject(cubeObjects);
-        cubeSceneObject->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
-        cubeSceneObject->MultScale(1/60.f);
-        cubeSceneObject->Translate(glm::vec3(3.f, 0.f, -1.f));
-        switch(i)
+        else if (matNameStr.compare("TableSG") == 0)
         {
-            case 0 :
-                cubeSceneObject->Translate(glm::vec3(-0.75f, 0.f, 0.27f));
-                break;
-            case 1 :
-                cubeSceneObject->Translate(glm::vec3(0.175f, 0.f, 0.52f));
-                break;
-            case 2 :
-                cubeSceneObject->Translate(glm::vec3(1.08f, 0.f, 0.27f));
-                break;
+            materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/WindowFrameWood.jpg"));
+            materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/WindowFrameWood.jpg"));
+        }
+        else if (matNameStr.compare("FrontWallSG") == 0)
+        {
+            materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/Wallpaper1.jpg"));
+            materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/Wallpaper1.jpg"));
+            rtObjects[i]->ScalePrimitiveUV(glm::vec2(8.0, 8.0));
+        }
+        else if (matNameStr.compare("CityscapeSG") == 0)
+        {
+            //materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/Cityscape.jpg"));
+            //materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/Cityscape.jpg"));
+            materialCopy->SetTexture("ambientTexture", TextureLoader::LoadTexture("rtimage/Cityscape.jpg"));
         }
         
-        cubeSceneObject->CreateAccelerationData(AccelerationTypes::BVH);
-        newScene->AddSceneObject(cubeSceneObject);
+        rtObjects[i]->SetMaterial(materialCopy);
+        
+        std::cout << "RT2 : Mesh object index - " << i << " name - " << rtObjects[i]->GetName() << " , material name - " << matNameStr << std::endl;
     }
     
-    for (size_t i = 3; i < 3; ++i)
-    {
-        std::shared_ptr<VolumeLight> volumeLight = std::make_shared<VolumeLight>();
-        volumeLight->AddMeshObject(cubeObjects[2]);
-        volumeLight->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
-        volumeLight->MultScale(1/60.f);
-        volumeLight->Translate(glm::vec3(3.f, 0.f, -1.f));
-        switch(i)
-        {
-            case 0 :
-                volumeLight->Translate(glm::vec3(-0.75f, 0.f, 0.27f));
-                break;
-            case 1 :
-                volumeLight->Translate(glm::vec3(0.175f, 0.f, 0.52f));
-                break;
-            case 2 :
-                volumeLight->Translate(glm::vec3(1.08f, 0.f, 0.27f));
-                break;
-        }
-        volumeLight->CreateAccelerationData(AccelerationTypes::BVH);
-        volumeLight->Finalize();
-        volumeLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
-        //volumeLight->SetLightColor(glm::vec3(226.f/255.f, 88.f/255.f, 34.f/255.f));
-        volumeLight->SetNumSamples(8);
-        newScene->AddLight(volumeLight);
-        
-        //std::cout << "Bounding box of volume light " << i << "  : minVtx = " << glm::to_string(volumeLight->GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(volumeLight->GetBoundingBox().maxVertex) << std::endl;
-        
-    }
-#endif
+    //rtObjects.erase(rtObjects.begin()+12);
+    //rtObjects.erase(rtObjects.begin()+0);
+    
+
+    std::shared_ptr<SceneObject> rtSceneObject = std::make_shared<SceneObject>();
+    rtSceneObject->AddMeshObject(rtObjects);
+    rtSceneObject->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
+    rtSceneObject->MultScale(1/100.f);
+    rtSceneObject->Translate(glm::vec3(0.f, 5.f, 0.f));
+    rtSceneObject->CreateAccelerationData(AccelerationTypes::BVH);
+    newScene->AddSceneObject(rtSceneObject);
     
 
     // Lights
-#if 0
+#if 1
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-    pointLight->SetPosition(glm::vec3(0.0f, 3.0f, 6.0f));
-    pointLight->SetLightColor(glm::vec3(244.f/255.f, 255.f/255.f, 250.f/255.f));    // std fluorescent
+    pointLight->SetPosition(glm::vec3(5.0f, 3.0f, 4.80f));
+    pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
+    //pointLight->SetLightColor(glm::vec3(244.f/255.f, 255.f/255.f, 250.f/255.f));    // std fluorescent
     //pointLight->SetLightColor(glm::vec3(255.f/255.f, 241.f/255.f, 224.f/255.f));    // halogen
     newScene->AddLight(pointLight);
 #endif
     
-#if 1
+#if 0
     std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>(glm::vec2(1.0f, 1.0f));
     areaLight->SetSamplerAttributes(glm::vec3(2.f, 2.f, 1.f), 8);
     areaLight->SetPosition(glm::vec3(0.0f, 0.0f, 6.0f));
@@ -249,11 +142,12 @@ std::shared_ptr<ColorSampler> RtImage::CreateSampler() const
 
 std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    //return std::make_shared<BackwardRenderer>(scene, sampler);
+    return std::make_shared<BackwardRenderer>(scene, sampler);
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
+    //photonRenderer->SetNumberOfSpecularPhotons(2000000);
     photonRenderer->SetPhotonSphereRadius(0.03);
-    photonRenderer->SetPhotonGatherMultiplier(4.0);
+    photonRenderer->SetPhotonGatherMultiplier(16.0);
     return photonRenderer;
 }
 
@@ -274,7 +168,7 @@ int RtImage::GetMaxReflectionBounces() const
 
 int RtImage::GetMaxRefractionBounces() const
 {
-    return 32;
+    return 6;
 }
 
 glm::vec2 RtImage::GetImageOutputResolution() const

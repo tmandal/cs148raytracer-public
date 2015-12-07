@@ -11,6 +11,8 @@ public:
     virtual glm::vec3 ComputeNonLightDependentBRDF(const class Renderer* renderer, const struct IntersectionState& intersection) const;
     virtual glm::vec3 ComputeBRDF(const struct IntersectionState& intersection, const glm::vec3& lightColor, const class Ray& toLightRay, const class Ray& fromCameraRay, float lightAttenuation, bool computeDiffuse = true, bool computeSpecular = true) const;
     
+    virtual glm::vec3 ComputeTransmissiveAttenuation() const;
+    
     virtual std::shared_ptr<Material> Clone() const = 0;
     virtual void LoadMaterialFromAssimp(std::shared_ptr<struct aiMaterial> assimpMaterial);
 

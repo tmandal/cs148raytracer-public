@@ -42,21 +42,14 @@ glm::vec3 BackwardRenderer::ComputeSampleColor(const IntersectionState& intersec
 
         for (size_t s = 0; s < sampleRays.size(); ++s) {
             // note that max T should be set to be right before the light.
-            IntersectionState shadowRayX(0, 1000);  // To allow penetrating media
-            HitStatus hitStatus = storedScene->Trace(&sampleRays[s], &shadowRayX, true);
-            float mediaAttenuation = 1.0;
-            if (hitStatus == HitStatus::HIT_OBJECTS) {
-                continue;
-            } else if (hitStatus == HitStatus::HIT_MEDIA_ONLY)   {
-                const MeshObject* mediaObject = shadowRayX.intersectedPrimitive->GetParentMeshObject();
-                assert(mediaObject);
-                assert(mediaObject->IsMedia());
-                mediaAttenuation = mediaObject->GetMedia()->ComputeLightAttenuation(&shadowRayX);
-            }
-            const float lightAttenuation = light->ComputeLightAttenuation(intersectionPoint) * mediaAttenuation;
+            IntersectionState shadowRayX(0, 0);  // To allow penetrating transimissive and participating media mesh
+            glm::vec3   meshAttenuation = glm::vec3(1.f);
+            storedScene->Trace(&sampleRays[s], &shadowRayX, &meshAttenuation, true);
+            
+            const float lightAttenuation = light->ComputeLightAttenuation(intersectionPoint);
 
             // Note that the material should compute the parts of the lighting equation too.
-            const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, light->GetLightColor(), sampleRays[s], fromCameraRay, lightAttenuation);
+            const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, light->GetLightColor() * meshAttenuation, sampleRays[s], fromCameraRay, lightAttenuation);
             sampleColor += brdfResponse;
         }
     }

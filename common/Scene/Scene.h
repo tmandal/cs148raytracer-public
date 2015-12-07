@@ -7,12 +7,6 @@ enum class AccelerationTypes;
 class Light;
 class SceneObject;
 
-enum class HitStatus
-{
-    HIT_NONE = 0,
-    HIT_OBJECTS,
-    HIT_MEDIA_ONLY,
-};
 
 class Scene : public std::enable_shared_from_this<Scene>
 {
@@ -23,9 +17,7 @@ public:
     // if outputIntersection is NULL, this merely checks whether or not the inputRay hits something.
     // if outputIntersection is NOT NULL, then this will check whether or not the inputRay hits something,
     //      and if it does, it will store that information and perform reflection/refraction and keep going.
-    // CHANGE - Add extra option to explicitly mark the shadow ray which won't do any reflection or refraction
-    // but will penetrate participating media which is transmissive.
-    HitStatus Trace(class Ray* inputRay, IntersectionState* outputIntersection, bool isShadowRay=false) const;
+    bool Trace(class Ray* inputRay, IntersectionState* outputIntersection, glm::vec3* attenuation=nullptr, bool isShadowRay=false) const;
 
     size_t GetTotalObjects() const
     {

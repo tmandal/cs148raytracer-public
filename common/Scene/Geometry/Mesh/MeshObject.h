@@ -30,6 +30,8 @@ public:
     virtual void SetMedia(std::shared_ptr<class Media> inputMedia);
     virtual const class Media* GetMedia() const;
     virtual bool IsMedia() const;
+    
+    virtual void ScalePrimitiveUV(glm::vec2 scale);
 
     virtual bool Trace(const class SceneObject* parentObject, class Ray* inputRay, struct IntersectionState* outputIntersection) const override;
 

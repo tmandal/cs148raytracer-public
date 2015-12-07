@@ -3,6 +3,7 @@
 #include "common/Scene/Geometry/Primitives/PrimitiveBase.h"
 #include "common/Scene/Geometry/Mesh/MeshObject.h"
 #include "common/Rendering/Material/Material.h"
+#include "common/Rendering/Media/Media.h"
 #include "common/Acceleration/AccelerationCommon.h"
 
 void Scene::GenerateDefaultAccelerationData()
@@ -25,31 +26,52 @@ AccelerationStructure* Scene::GenerateAccelerationData(AccelerationTypes inputTy
 }
 
 
-HitStatus Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersection, bool isShadowRay) const
+bool Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersection, glm::vec3* attenuation, bool isShadowRay) const
 {
     assert(inputRay);
     DIAGNOSTICS_STAT(DiagnosticsType::RAYS_CREATED);
 
     bool didIntersect = acceleration->Trace(nullptr, inputRay, outputIntersection);
-    HitStatus   indirectHitStatus = HitStatus::HIT_NONE;
     if (outputIntersection != nullptr && didIntersect) {
         const MeshObject* intersectedMesh = outputIntersection->intersectedPrimitive->GetParentMeshObject();
         assert(intersectedMesh);
         const Material* currentMaterial = intersectedMesh->GetMaterial();
         assert(currentMaterial);
+        
+        const glm::vec3 intersectionPoint = outputIntersection->intersectionRay.GetRayPosition(outputIntersection->intersectionT);
+        const float NdR = glm::dot(inputRay->GetRayDirection(), outputIntersection->ComputeNormal());
 
-        // Trace through the object if it's not a shadow ray of it's participating media
-        if (!isShadowRay || intersectedMesh->IsMedia())    {
+        // For shadow ray, trace through participating media and transmissive mesh only
+        if (isShadowRay)
+        {
+            if (attenuation != nullptr && (intersectedMesh->IsMedia() || currentMaterial->IsTransmissive()))
+            {
+                Ray nextShadowRay(intersectionPoint + LARGE_EPSILON * inputRay->GetRayDirection(), inputRay->GetRayDirection(), inputRay->GetMaxT() - outputIntersection->intersectionT);
+                IntersectionState   nextShadowX(0, 0);
+                
+                if (Trace(&nextShadowRay, &nextShadowX, attenuation, isShadowRay))
+                {
+                    if (intersectedMesh->IsMedia())
+                        *attenuation = *attenuation * intersectedMesh->GetMedia()->ComputeLightAttenuation(&nextShadowX);
+                    else if (currentMaterial->IsTransmissive())
+                        *attenuation = *attenuation * currentMaterial->ComputeTransmissiveAttenuation();
+                    else    // Hit an opaque object
+                        *attenuation = glm::vec3(0.f);
+                }
+            }
+            else if (attenuation != nullptr)    // Hit an opaque object
+                *attenuation = glm::vec3(0.f);
+            
+        }
+        else    {
 
-            const glm::vec3 intersectionPoint = outputIntersection->intersectionRay.GetRayPosition(outputIntersection->intersectionT);
-            const float NdR = glm::dot(inputRay->GetRayDirection(), outputIntersection->ComputeNormal());
             // send out reflection ray.
             if (currentMaterial->IsReflective() && outputIntersection->remainingReflectionBounces > 0) {
                 outputIntersection->reflectionIntersection = std::make_shared<IntersectionState>(outputIntersection->remainingReflectionBounces - 1, outputIntersection->remainingRefractionBounces);
          
                 Ray reflectionRay;
                 PerformRaySpecularReflection(reflectionRay, *inputRay, intersectionPoint, NdR, *outputIntersection);
-                indirectHitStatus = Trace(&reflectionRay, outputIntersection->reflectionIntersection.get());
+                Trace(&reflectionRay, outputIntersection->reflectionIntersection.get(), attenuation, isShadowRay);
             }
          
             // send out refraction ray.
@@ -63,18 +85,12 @@ HitStatus Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersectio
                 PerformRayRefraction(refractionRay, *inputRay, intersectionPoint, NdR, *outputIntersection, targetIOR);
                 outputIntersection->refractionIntersection->currentIOR = targetIOR;
                 //std::cout << "Refraction trace : remainingBounces=" <<  outputIntersection->remainingRefractionBounces - 1 << " inputRay - position=" << glm::to_string(inputRay->GetPosition()) << ", direction=" << glm::to_string(inputRay->GetRayDirection()) << "refractionRay - position=" << glm::to_string(refractionRay.GetPosition()) << ", direction=" << glm::to_string(refractionRay.GetRayDirection()) << std::endl;
-                indirectHitStatus = Trace(&refractionRay, outputIntersection->refractionIntersection.get());
+                Trace(&refractionRay, outputIntersection->refractionIntersection.get(), attenuation, isShadowRay);
             }
         }
     }
 
-    if (didIntersect)
-        if (outputIntersection != nullptr && outputIntersection->intersectedPrimitive->GetParentMeshObject()->IsMedia() && indirectHitStatus != HitStatus::HIT_OBJECTS)
-            return HitStatus::HIT_MEDIA_ONLY;
-        else
-            return HitStatus::HIT_OBJECTS;
-    else
-        return HitStatus::HIT_NONE;
+    return didIntersect;
 }
 
 void Scene::PerformRaySpecularReflection(Ray& outputRay, const Ray& inputRay, const glm::vec3& intersectionPoint, const float NdR, const IntersectionState& state) const
