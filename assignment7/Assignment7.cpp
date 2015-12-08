@@ -55,7 +55,8 @@ std::shared_ptr<class Renderer> Assignment7::CreateRenderer(std::shared_ptr<Scen
 {
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
-    photonRenderer->SetPhotonSphereRadius(0.03);
+    photonRenderer->SetDiffusePhotonSphereRadius(0.03);
+    photonRenderer->SetSpecularPhotonSphereRadius(0.03);
     return photonRenderer;
 }
 

@@ -120,8 +120,10 @@ std::shared_ptr<class Renderer> Assignment8::CreateRenderer(std::shared_ptr<Scen
     //return std::make_shared<BackwardRenderer>(scene, sampler);
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
-    photonRenderer->SetPhotonSphereRadius(0.03);
-    photonRenderer->SetPhotonGatherMultiplier(4.0);
+    photonRenderer->SetDiffusePhotonSphereRadius(0.03);
+    photonRenderer->SetDiffusePhotonGatherMultiplier(4.0);
+    photonRenderer->SetSpecularPhotonSphereRadius(0.03);
+    photonRenderer->SetSpecularPhotonGatherMultiplier(4.0);
     return photonRenderer;
 #else
     return std::make_shared<BackwardRenderer>(scene, sampler);

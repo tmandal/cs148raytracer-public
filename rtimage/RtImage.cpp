@@ -6,7 +6,7 @@
 std::shared_ptr<Camera> RtImage::CreateCamera() const
 {
     const glm::vec2 resolution = GetImageOutputResolution();
-#if 0
+#if 1
     std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
     camera->SetPosition(glm::vec3(0.5f, -4.f, 2.f));
 #else
@@ -61,12 +61,12 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         else if (matNameStr.compare("WindowGlassSG") == 0)
         {
             materialCopy->SetReflectivity(0.2);
-            materialCopy->SetTransmittance(0.7);
+            materialCopy->SetTransmittance(0.8);
         }
         else if (matNameStr.compare("WineGlassSG") == 0)
         {
-            materialCopy->SetReflectivity(0.2);
-            materialCopy->SetTransmittance(0.8);
+            materialCopy->SetReflectivity(0.1);
+            materialCopy->SetTransmittance(0.9);
         }
         else if (matNameStr.compare("WineLiquidSG") == 0)
         {
@@ -89,9 +89,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         }
         else if (matNameStr.compare("CityscapeSG") == 0)
         {
-            //materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/Cityscape.jpg"));
-            //materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/Cityscape.jpg"));
-            materialCopy->SetTexture("ambientTexture", TextureLoader::LoadTexture("rtimage/Cityscape.jpg"));
+            materialCopy->SetTexture("ambientTexture", TextureLoader::LoadTexture("rtimage/Cityscape3.jpg"));
         }
         
         rtObjects[i]->SetMaterial(materialCopy);
@@ -99,7 +97,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         std::cout << "RT2 : Mesh object index - " << i << " name - " << rtObjects[i]->GetName() << " , material name - " << matNameStr << std::endl;
     }
     
-    //rtObjects.erase(rtObjects.begin()+12);
+    //rtObjects.erase(rtObjects.begin()+13);
     //rtObjects.erase(rtObjects.begin()+0);
     
 
@@ -113,12 +111,10 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
 
     // Lights
-#if 0
+#if 1
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
     pointLight->SetPosition(glm::vec3(5.0f, 3.0f, 4.80f));
-    pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
-    //pointLight->SetLightColor(glm::vec3(244.f/255.f, 255.f/255.f, 250.f/255.f));    // std fluorescent
-    //pointLight->SetLightColor(glm::vec3(255.f/255.f, 241.f/255.f, 224.f/255.f));    // halogen
+    pointLight->SetLightColor(glm::vec3(0.5f));
     newScene->AddLight(pointLight);
 #endif
     
@@ -129,10 +125,20 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     areaLight->SetLightColor(glm::vec3(244.f/255.f, 255.f/255.f, 250.f/255.f));
     newScene->AddLight(areaLight);
 #endif
+    
+#if 0
+    std::shared_ptr<AreaLight> areaLight2 = std::make_shared<AreaLight>(glm::vec2(3.0f, 3.0f));
+    areaLight2->SetSamplerAttributes(glm::vec3(2.f, 2.f, 1.f), 8);
+    areaLight2->SetPosition(glm::vec3(0.77f, 5.5f, 0.18f));
+    areaLight2->Rotate(glm::vec3(1.f, 0.f, 0.f), -PI/2.f);
+    areaLight2->SetLightColor(glm::vec3(1.f));
+    newScene->AddLight(areaLight2);
+#endif
 
-#if 1
-    std::shared_ptr<DirectionalAreaLight> directionalAreaLight = std::make_shared<DirectionalAreaLight>(glm::vec2(5.0f, 5.0f));
-    directionalAreaLight->SetPosition(glm::vec3(0.0f, 0.0f, 4.8f));
+#if 0
+    std::shared_ptr<DirectionalAreaLight> directionalAreaLight = std::make_shared<DirectionalAreaLight>(glm::vec2(3.0f, 3.0f), glm::vec3(0.0f, 1.0f, -2.0f));
+    directionalAreaLight->SetPosition(glm::vec3(0.77f, 5.5f, 0.18f));
+    directionalAreaLight->Rotate(glm::vec3(1.f, 0.f, 0.f), -PI/2.f);
     directionalAreaLight->SetLightColor(glm::vec3(1.f));
     newScene->AddLight(directionalAreaLight);
 #endif
@@ -149,12 +155,14 @@ std::shared_ptr<ColorSampler> RtImage::CreateSampler() const
 
 std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    return std::make_shared<BackwardRenderer>(scene, sampler);
+    //return std::make_shared<BackwardRenderer>(scene, sampler);
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
     //photonRenderer->SetNumberOfDiffusePhotons(2000000);
     //photonRenderer->SetNumberOfSpecularPhotons(2000000);
-    photonRenderer->SetPhotonSphereRadius(0.03);
-    photonRenderer->SetPhotonGatherMultiplier(16.0);
+    photonRenderer->SetDiffusePhotonSphereRadius(0.03);
+    photonRenderer->SetDiffusePhotonGatherMultiplier(16.0);
+    photonRenderer->SetSpecularPhotonSphereRadius(0.01);
+    photonRenderer->SetSpecularPhotonGatherMultiplier(16.0);
     return photonRenderer;
 }
 

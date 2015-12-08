@@ -34,11 +34,12 @@ void RayTracer::Run()
     {
         const SceneObject& sceneObject = currentScene->GetSceneObject(i);
         std::cout << "Bounding box of scene object " << i << "  : minVtx = " << glm::to_string(sceneObject.GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(sceneObject.GetBoundingBox().maxVertex) << std::endl;
-#if 0
+#if 1
         for (size_t j = 0; j < sceneObject.GetTotalMeshObjects(); ++j)
         {
             const MeshObject*   meshObject = sceneObject.GetMeshObject(j);
-            std::cout << "    Bounding box of mesh object " << j << " named as " << meshObject->GetName() << " : minVtx = " << glm::to_string(meshObject->GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(meshObject->GetBoundingBox().maxVertex) << std::endl;
+            Box                 boundingBox = meshObject->GetBoundingBox().Transform(sceneObject.GetObjectToWorldMatrix());
+            std::cout << "    Bounding box of mesh object " << j << " named as " << meshObject->GetName() << " : minVtx = " << glm::to_string(boundingBox.minVertex) << " maxVtx = " << glm::to_string(boundingBox.maxVertex) << std::endl;
         }
 #endif
     }

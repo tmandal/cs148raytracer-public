@@ -16,8 +16,10 @@ public:
 
     void SetNumberOfDiffusePhotons(int diffuse);
     void SetNumberOfSpecularPhotons(int specular);
-    void SetPhotonSphereRadius(float radius);
-    void SetPhotonGatherMultiplier(float multiplier);
+    void SetDiffusePhotonSphereRadius(float radius);
+    void SetDiffusePhotonGatherMultiplier(float multiplier);
+    void SetSpecularPhotonSphereRadius(float radius);
+    void SetSpecularPhotonGatherMultiplier(float multiplier);
 private:
     using PhotonKdtree = KDTree::KDTree<3, Photon, PhotonAccessor>;
     PhotonKdtree diffuseMap;
@@ -27,8 +29,11 @@ private:
     int specularPhotonNumber;
     int maxPhotonBounces;
     
-    float photonSphereRadius;
-    float photonGatherMultiplier;
+    float diffusePhotonSphereRadius;
+    float diffusePhotonGatherMultiplier;
+    
+    float specularPhotonSphereRadius;
+    float specularPhotonGatherMultiplier;
 
     std::pair<int, glm::vec3> GetPhotonIntensity(const class Light* currentLight, int totalPhotons);
 
@@ -37,5 +42,7 @@ private:
 
     void TracePhoton(bool specularPhotonPath, Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces);
     void TraceSpecularPhoton(Ray* photonRay, glm::vec3 lightIntensity, std::vector<char>& path, float currentIOR, int remainingBounces);
+    
+    glm::vec3 ComputePhotonMapColor(const struct IntersectionState& intersection, const class Ray& fromCameraRay) const;
 
 };

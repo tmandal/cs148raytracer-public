@@ -14,6 +14,7 @@
 //#define VISUALIZE_PHOTON_MAPPING 1
 //#define PHOTON_MAPPING_DEBUG
 //#define PHOTON_GATHERING_DEBUG
+#define FINAL_PHOTON_GATHERING
 
 // Utility
 float glm_max_component(glm::vec3 vector)
@@ -37,8 +38,10 @@ PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene,
     diffusePhotonNumber(1000000),
     specularPhotonNumber(500000),
     maxPhotonBounces(1000),
-    photonSphereRadius(0.003f),
-    photonGatherMultiplier(1.0f)
+    diffusePhotonSphereRadius(0.003f),
+    diffusePhotonGatherMultiplier(1.0f),
+    specularPhotonSphereRadius(0.003f),
+    specularPhotonGatherMultiplier(1.0f)
 {
 }
 
@@ -372,63 +375,131 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
     if (!foundSpecularPhotons.empty()) {
         finalRenderColor += glm::vec3(0.f, 1.f, 0.f);
     }
+#elif defined(FINAL_PHOTON_GATHERING)
+    if (intersection.hasIntersection) {
+        int finalGatherRayNumber = 10;
+        const glm::vec3     intersectionPoint = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
+        glm::vec3   finalGatherColor;
+        int         totalFinalGatherRays = 0;
+        for (size_t i = 0; i < finalGatherRayNumber; ++i)
+        {
+            // Hemisphere sampling
+            float   u1 = RandFloat01();
+            float   u2 = RandFloat01();
+            
+            float   r = sqrtf(u1);
+            float   theta = 2 * PI * u2;
+            
+            float   x = r * cosf(theta);
+            float   y = r * sinf(theta);
+            float   z = sqrt(1 - u1);
+            glm::vec3   sampleRay = glm::normalize(glm::vec3(x, y, z));
+            
+#ifdef PHOTON_MAPPING_DEBUG
+            //std::cout << "Hemisphere sample ray direction = " << glm::to_string(sampleRay) << std::endl;
+#endif
+            
+            // Normal, Tangent and Bitangent vector generation
+            glm::vec3   N = glm::normalize(intersection.ComputeNormal());
+            glm::vec3   T;
+            glm::vec3   B;
+            
+            if (N.x > LARGE_EPSILON || N.x < -LARGE_EPSILON || N.y > LARGE_EPSILON || N.y < -LARGE_EPSILON)
+                T = glm::vec3(-N.y, N.x, 0.0);
+            else
+                T = glm::vec3(0.0, -N.z, N.y);
+            B = glm::cross(N, T);
+            
+            T = glm::normalize(T);
+            B = glm::normalize(B);
+            
+#ifdef PHOTON_MAPPING_DEBUG
+            //std::cout << "N = " << glm::to_string(N) << " T = " << glm::to_string(T) << " B = " << glm::to_string(B) << std::endl;
+#endif
+            
+            glm::mat3   toWorldSpaceTransform = glm::mat3(T, B, N);
+            
+            // Construct  final gather ray
+            Ray finalGatherRay;
+            
+            finalGatherRay.SetRayPosition(intersectionPoint + LARGE_EPSILON * N);
+            finalGatherRay.SetRayDirection(toWorldSpaceTransform * sampleRay);
+            
+            IntersectionState state(0, 0);
+            if (storedScene->Trace(&finalGatherRay, &state))
+            {
+                finalGatherColor += ComputePhotonMapColor(intersection, fromCameraRay);
+                ++totalFinalGatherRays;
+            }
+        }
+        
+        if (totalFinalGatherRays> 0)
+            finalRenderColor += finalGatherColor / (float)totalFinalGatherRays;
+    }
 #else
     if (intersection.hasIntersection) {
-        const MeshObject* parentObject = intersection.intersectedPrimitive->GetParentMeshObject();
-        assert(parentObject);
-        
-        const Material* objectMaterial = parentObject->GetMaterial();
-        assert(objectMaterial);
-        
-        // Compute the color at the intersection using gathering photons.
-        Photon intersectionVirtualPhoton;
-        intersectionVirtualPhoton.position = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
-        std::vector<Photon> foundDiffusePhotons;
-        diffuseMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundDiffusePhotons));
-        std::vector<Photon> foundSpecularPhotons;
-        specularMap.find_within_range(intersectionVirtualPhoton, photonSphereRadius, std::back_inserter(foundSpecularPhotons));
-        
-        glm::vec3   diffuseMapGatherColor;
-        for (size_t i = 0; i < foundDiffusePhotons.size(); ++i) {
-            const Photon&   photon = foundDiffusePhotons[i];
-            
-            // Note that the material should compute the parts of the lighting equation too.
-            //std::cout << "Photon : intensity = " << glm::to_string(photon.intensity) << ", ToLightRay = " << glm::to_string(photon.toLightRay.GetRayDirection()) <<  ", fromCameraRay=" << glm::to_string(fromCameraRay.GetRayDirection()) << std::endl;
-            // Do diffuse BRDF
-            const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, photon.intensity, photon.toLightRay, fromCameraRay, 1.0f, true, false);
-            //std::cout << "BRDF response due to neighboring photons - " << glm::to_string(brdfResponse) << std::endl;
-            diffuseMapGatherColor += brdfResponse;
-        }
-        diffuseMapGatherColor = diffuseMapGatherColor / (PI * photonSphereRadius * photonSphereRadius);
-#ifdef PHOTON_GATHERING_DEBUG
-        //if (foundDiffusePhotons.size() > 0)
-        //    std::cout << "Color gathered from photon map of " << foundDiffusePhotons.size() << " neighboring diffuse photons - " << glm::to_string(diffuseMapGatherColor) << std::endl;
-#endif
-        finalRenderColor += diffuseMapGatherColor * photonGatherMultiplier;
-        
-        glm::vec3   specularMapGatherColor;
-        for (size_t i = 0; i < foundSpecularPhotons.size(); ++i) {
-            const Photon&   photon = foundSpecularPhotons[i];
-            
-            // Note that the material should compute the parts of the lighting equation too.
-            //std::cout << "Photon : intensity = " << glm::to_string(photon.intensity) << ", ToLightRay = " << glm::to_string(photon.toLightRay.GetRayDirection()) <<  ", fromCameraRay=" << glm::to_string(fromCameraRay.GetRayDirection()) << std::endl;
-            // Do specular BRDF
-            const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, photon.intensity, photon.toLightRay, fromCameraRay, 1.0f, true, false);
-            //std::cout << "BRDF response due to neighboring photons - " << glm::to_string(brdfResponse) << std::endl;
-            specularMapGatherColor += brdfResponse;
-        }
-        specularMapGatherColor = specularMapGatherColor / (PI * photonSphereRadius * photonSphereRadius);
-#ifdef PHOTON_GATHERING_DEBUG
-        if (foundSpecularPhotons.size() > 0)
-            std::cout << "Color gathered from photon map of " << foundSpecularPhotons.size() << " neighboring specular photons - " << glm::to_string(specularMapGatherColor) << std::endl;
-#endif
-        finalRenderColor += specularMapGatherColor * photonGatherMultiplier;
+        finalRenderColor += ComputePhotonMapColor(intersection, fromCameraRay);
     }
-    
-    
 #endif
     
     return finalRenderColor;
+}
+
+glm::vec3 PhotonMappingRenderer::ComputePhotonMapColor(const struct IntersectionState& intersection, const class Ray& fromCameraRay) const
+{
+    glm::vec3   photonMapRenderColor;
+    
+    const MeshObject* parentObject = intersection.intersectedPrimitive->GetParentMeshObject();
+    assert(parentObject);
+    
+    const Material* objectMaterial = parentObject->GetMaterial();
+    assert(objectMaterial);
+    
+    // Compute the color at the intersection using gathering photons.
+    Photon intersectionVirtualPhoton;
+    intersectionVirtualPhoton.position = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
+    std::vector<Photon> foundDiffusePhotons;
+    diffuseMap.find_within_range(intersectionVirtualPhoton, diffusePhotonSphereRadius, std::back_inserter(foundDiffusePhotons));
+    std::vector<Photon> foundSpecularPhotons;
+    specularMap.find_within_range(intersectionVirtualPhoton, specularPhotonSphereRadius, std::back_inserter(foundSpecularPhotons));
+    
+    glm::vec3   diffuseMapGatherColor;
+    for (size_t i = 0; i < foundDiffusePhotons.size(); ++i) {
+        const Photon&   photon = foundDiffusePhotons[i];
+        
+        // Note that the material should compute the parts of the lighting equation too.
+        //std::cout << "Photon : intensity = " << glm::to_string(photon.intensity) << ", ToLightRay = " << glm::to_string(photon.toLightRay.GetRayDirection()) <<  ", fromCameraRay=" << glm::to_string(fromCameraRay.GetRayDirection()) << std::endl;
+        // Do diffuse BRDF
+        const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, photon.intensity, photon.toLightRay, fromCameraRay, 1.0f, true, false);
+        //std::cout << "BRDF response due to neighboring photons - " << glm::to_string(brdfResponse) << std::endl;
+        diffuseMapGatherColor += brdfResponse;
+    }
+    diffuseMapGatherColor = diffuseMapGatherColor / (PI * diffusePhotonSphereRadius * diffusePhotonSphereRadius);
+#ifdef PHOTON_GATHERING_DEBUG
+    //if (foundDiffusePhotons.size() > 0)
+    //    std::cout << "Color gathered from photon map of " << foundDiffusePhotons.size() << " neighboring diffuse photons - " << glm::to_string(diffuseMapGatherColor) << std::endl;
+#endif
+    photonMapRenderColor += diffuseMapGatherColor * diffusePhotonGatherMultiplier;
+    
+    glm::vec3   specularMapGatherColor;
+    for (size_t i = 0; i < foundSpecularPhotons.size(); ++i) {
+        const Photon&   photon = foundSpecularPhotons[i];
+        
+        // Note that the material should compute the parts of the lighting equation too.
+        //std::cout << "Photon : intensity = " << glm::to_string(photon.intensity) << ", ToLightRay = " << glm::to_string(photon.toLightRay.GetRayDirection()) <<  ", fromCameraRay=" << glm::to_string(fromCameraRay.GetRayDirection()) << std::endl;
+        // Do specular BRDF
+        const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, photon.intensity, photon.toLightRay, fromCameraRay, 1.0f, true, false);
+        //std::cout << "BRDF response due to neighboring photons - " << glm::to_string(brdfResponse) << std::endl;
+        specularMapGatherColor += brdfResponse;
+    }
+    specularMapGatherColor = specularMapGatherColor / (PI * specularPhotonSphereRadius * specularPhotonSphereRadius);
+#ifdef PHOTON_GATHERING_DEBUG
+    if (foundSpecularPhotons.size() > 0)
+        std::cout << "Color gathered from photon map of " << foundSpecularPhotons.size() << " neighboring specular photons - " << glm::to_string(specularMapGatherColor) << std::endl;
+#endif
+    photonMapRenderColor += specularMapGatherColor * specularPhotonGatherMultiplier;
+    
+    return photonMapRenderColor;
 }
 
 void PhotonMappingRenderer::SetNumberOfDiffusePhotons(int diffuse)
@@ -441,12 +512,22 @@ void PhotonMappingRenderer::SetNumberOfSpecularPhotons(int specular)
     specularPhotonNumber = specular;
 }
 
-void PhotonMappingRenderer::SetPhotonSphereRadius(float radius)
+void PhotonMappingRenderer::SetDiffusePhotonSphereRadius(float radius)
 {
-    photonSphereRadius = radius;
+    diffusePhotonSphereRadius = radius;
 }
 
-void PhotonMappingRenderer::SetPhotonGatherMultiplier(float multiplier)
+void PhotonMappingRenderer::SetDiffusePhotonGatherMultiplier(float multiplier)
 {
-    photonGatherMultiplier = multiplier;
+    diffusePhotonGatherMultiplier = multiplier;
+}
+
+void PhotonMappingRenderer::SetSpecularPhotonSphereRadius(float radius)
+{
+    specularPhotonSphereRadius = radius;
+}
+
+void PhotonMappingRenderer::SetSpecularPhotonGatherMultiplier(float multiplier)
+{
+    specularPhotonGatherMultiplier = multiplier;
 }
