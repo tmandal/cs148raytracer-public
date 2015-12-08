@@ -128,6 +128,7 @@ source_group(common\\Scene\\Geometry\\Simple\\Box REGULAR_EXPRESSION common/Scen
 source_group(common\\Scene\\Lights REGULAR_EXPRESSION common/Scene/Lights/.*)
 source_group(common\\Scene\\Lights\\Directional REGULAR_EXPRESSION common/Scene/Lights/Directional/.*)
 source_group(common\\Scene\\Lights\\Point REGULAR_EXPRESSION common/Scene/Lights/Point/.*)
+source_group(common\\Scene\\Lights\\DirectionalArea REGULAR_EXPRESSION common/Scene/Lights/DirectionalArea/.*)
 source_group(common\\Utility REGULAR_EXPRESSION common/Utility/.*)
 source_group(common\\Utility\\Diagnostics REGULAR_EXPRESSION common/Utility/Diagnostics/.*)
 source_group(common\\Utility\\Texture REGULAR_EXPRESSION common/Utility/Texture/.*)

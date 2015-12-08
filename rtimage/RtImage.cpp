@@ -6,7 +6,7 @@
 std::shared_ptr<Camera> RtImage::CreateCamera() const
 {
     const glm::vec2 resolution = GetImageOutputResolution();
-#if 1
+#if 0
     std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
     camera->SetPosition(glm::vec3(0.5f, -4.f, 2.f));
 #else
@@ -113,7 +113,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
 
     // Lights
-#if 1
+#if 0
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
     pointLight->SetPosition(glm::vec3(5.0f, 3.0f, 4.80f));
     pointLight->SetLightColor(glm::vec3(1.f, 1.f, 1.f));
@@ -128,6 +128,13 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     areaLight->SetPosition(glm::vec3(0.0f, 0.0f, 6.0f));
     areaLight->SetLightColor(glm::vec3(244.f/255.f, 255.f/255.f, 250.f/255.f));
     newScene->AddLight(areaLight);
+#endif
+
+#if 1
+    std::shared_ptr<DirectionalAreaLight> directionalAreaLight = std::make_shared<DirectionalAreaLight>(glm::vec2(5.0f, 5.0f));
+    directionalAreaLight->SetPosition(glm::vec3(0.0f, 0.0f, 4.8f));
+    directionalAreaLight->SetLightColor(glm::vec3(1.f));
+    newScene->AddLight(directionalAreaLight);
 #endif
 
     return newScene;

@@ -12,6 +12,7 @@
 #include "common/Scene/Lights/Area/AreaLight.h"
 #include "common/Scene/Lights/Volume/VolumeLight.h"
 #include "common/Scene/Lights/Directional/DirectionalLight.h"
+#include "common/Scene/Lights/DirectionalArea/DirectionalAreaLight.h"
 #include "common/Rendering/Material/BlinnPhong/BlinnPhongMaterial.h"
 #include "common/Rendering/Media/Media.h"
 #include "common/Utility/Mesh/Loading/MeshLoader.h"
