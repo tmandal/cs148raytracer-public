@@ -1,5 +1,6 @@
 #include "common/Scene/Camera/Perspective/PerspectiveCamera.h"
 #include "common/Scene/Geometry/Ray/Ray.h"
+#include "common/utils.h"
 
 PerspectiveCamera::PerspectiveCamera(float aspectRatio, float inputFov):
     aspectRatio(aspectRatio), fov(inputFov * PI / 180.f), zNear(0.f), zFar(std::numeric_limits<float>::max()), zFocal(1.0f), apertureRadius(0.0f)

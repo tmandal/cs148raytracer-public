@@ -21,3 +21,4 @@
 #include "common/Rendering/Renderer.h"
 #include "common/Rendering/Renderer/Backward/BackwardRenderer.h"
 #include "common/Rendering/Renderer/Photon/PhotonMappingRenderer.h"
+

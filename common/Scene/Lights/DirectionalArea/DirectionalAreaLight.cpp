@@ -1,4 +1,5 @@
 #include "common/Scene/Lights/DirectionalArea/DirectionalAreaLight.h"
+#include "common/utils.h"
 
 DirectionalAreaLight::DirectionalAreaLight(const glm::vec2& size, const glm::vec3& direction):
 lightSize(size), lightDirection(glm::normalize(direction))

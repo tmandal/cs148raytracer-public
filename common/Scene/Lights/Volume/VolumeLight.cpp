@@ -9,6 +9,14 @@
 #include "VolumeLight.h"
 #include "common/Scene/Geometry/Primitives/PrimitiveBase.h"
 #include "common/Scene/Geometry/Mesh/MeshObject.h"
+#include "common/Intersection/IntersectionState.h"
+#include "common/utils.h"
+
+VolumeLight::VolumeLight(int numSamples)
+: samplesToUse(numSamples)
+{
+    
+}
 
 void VolumeLight::ComputeTriangleAreas()
 {
@@ -34,22 +42,40 @@ void VolumeLight::ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, 
 {
     assert(GetTotalMeshObjects() > 0);
     origin += normal * LARGE_EPSILON;
+    int retryCount = 0;
     for (int i = 0; i < samplesToUse; ++i)
     {
-        size_t                  m = rand()%GetTotalMeshObjects();
-        const MeshObject*       meshObject = GetMeshObject(m);
-        size_t                  p = rand()%meshObject->GetTotalPrimitives();
-        const PrimitiveBase*    primitive = meshObject->GetPrimitive(p);
-        glm::vec3               sample = primitive->GetVertexPosition(0) + RandFloat01() * (primitive->GetVertexPosition(1) - primitive->GetVertexPosition(0)) + RandFloat01() * (primitive->GetVertexPosition(2) - primitive->GetVertexPosition(1));
-        glm::vec3               lightPosition = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(sample, 1.f));
-        const glm::vec3         rayDirection = glm::normalize(lightPosition - origin);
-        lightPosition -= rayDirection * LARGE_EPSILON;
-        const float             distanceToOrigin = glm::distance(origin, lightPosition);
-        const glm::vec3         lightNormal = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(primitive->GetPrimitiveNormal(), 1.f));
-        if (glm::dot(rayDirection, lightNormal) < - SMALL_EPSILON)
-            output.emplace_back(origin, rayDirection, distanceToOrigin);
-        else    // retry
-            --i;
+                
+        glm::vec3   randomObjectPoint = rand_point(GetBoundingBox());
+        Ray         toLightRay = Ray(origin, glm::normalize(randomObjectPoint-origin));
+        IntersectionState   intersection(0, 0);
+        if (Trace(this, &toLightRay, &intersection))
+        {
+            glm::vec3 intersectionPoint = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
+            
+            glm::vec3 lightNormal = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(intersection.intersectedPrimitive->GetPrimitiveNormal(), 1.f));
+            glm::vec3 lightPosition = intersectionPoint + lightNormal * LARGE_EPSILON;
+            
+            glm::vec3 rayDirection = glm::normalize(lightPosition - origin);
+            
+            if (glm::dot(rayDirection, lightNormal) < - SMALL_EPSILON)
+            {
+                float   distanceToOrigin = glm::distance(origin, lightPosition);
+                output.emplace_back(origin, rayDirection, distanceToOrigin);
+            }
+            else    // retry
+                --i;
+        }
+        else
+        {
+            --i;    // no hit. retry
+        }
+        
+        if (++retryCount >= 2 * samplesToUse)
+        {
+            //std::cout << "Warning : VolumeLight computed only " << i+1 << " sample rays (" << samplesToUse << " rays needed) in " << retryCount << " tries" << std::endl;
+            break;
+        }
     }
 }
 

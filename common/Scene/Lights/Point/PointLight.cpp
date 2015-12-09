@@ -1,4 +1,5 @@
 #include "common/Scene/Lights/Point/PointLight.h"
+#include "common/utils.h"
 
 void PointLight::ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, glm::vec3 normal) const
 {

@@ -10,28 +10,12 @@
 #include "common/Scene/Geometry/Mesh/MeshObject.h"
 #include "common/Rendering/Material/Material.h"
 #include "glm/gtx/component_wise.hpp"
+#include "common/utils.h"
 
-#define VISUALIZE_PHOTON_MAPPING 1
+//#define VISUALIZE_PHOTON_MAPPING 1
 //#define PHOTON_MAPPING_DEBUG
 //#define PHOTON_GATHERING_DEBUG
 //#define FINAL_PHOTON_GATHERING
-
-// Utility
-float glm_max_component(glm::vec3 vector)
-{
-    return (vector.x > vector.y)
-        ? (vector.x > vector.z ? vector.x : vector.z)
-        : (vector.y > vector.z ? vector.y : vector.z);
-}
-
-glm::vec3 rand_point(const Box& box)
-{
-    float   xShift = RandFloat01();
-    float   yShift = RandFloat01();
-    float   zShift = RandFloat01();
-
-    return (box.minVertex + glm::vec3(xShift, yShift, zShift) * (box.maxVertex - box.minVertex));
-}
 
 PhotonMappingRenderer::PhotonMappingRenderer(std::shared_ptr<class Scene> scene, std::shared_ptr<class ColorSampler> sampler):
     BackwardRenderer(scene, sampler), 

@@ -136,11 +136,30 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
 #if 1
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
     pointLight->SetPosition(glm::vec3(-3.0f, 3.0f, 4.80f));
-    pointLight->SetLightColor(glm::vec3(1.f));
+    pointLight->SetLightColor(glm::vec3(0.5f));
     newScene->AddLight(pointLight);
 #endif
 
-#if 1
+#if 0
+    std::shared_ptr<VolumeLight> volumeLight = std::make_shared<VolumeLight>(8);
+    volumeLight->AddMeshObject(std::vector<std::shared_ptr<MeshObject>>(1, rtObjects[20])); // LeftLight
+    volumeLight->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
+    volumeLight->MultScale(1/100.f);
+    volumeLight->Translate(glm::vec3(0.f, 5.f, 0.f));
+    volumeLight->CreateAccelerationData(AccelerationTypes::BVH);
+    volumeLight->Finalize();
+    volumeLight->SetLightColor(glm::vec3(1.f));
+    newScene->AddLight(volumeLight);
+    
+    std::shared_ptr<VolumeLight> volumeLight2 = std::make_shared<VolumeLight>(8);
+    volumeLight2->AddMeshObject(std::vector<std::shared_ptr<MeshObject>>(1, rtObjects[42])); // RightLight
+    volumeLight2->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
+    volumeLight2->MultScale(1/100.f);
+    volumeLight2->Translate(glm::vec3(0.f, 5.f, 0.f));
+    volumeLight2->CreateAccelerationData(AccelerationTypes::BVH);
+    volumeLight2->Finalize();
+    volumeLight2->SetLightColor(glm::vec3(1.f));
+    newScene->AddLight(volumeLight2);
 #endif
     
 #if 0

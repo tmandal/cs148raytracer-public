@@ -5,7 +5,7 @@
 class VolumeLight : public Light
 {
 public:
-    
+    VolumeLight(int numSamples);
     virtual void ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, glm::vec3 normal) const override;
     virtual float ComputeLightAttenuation(glm::vec3 origin) const override;
     

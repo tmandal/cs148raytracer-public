@@ -1,4 +1,5 @@
 #include "common/Scene/Lights/Area/AreaLight.h"
+#include "common/utils.h"
 
 AreaLight::AreaLight(const glm::vec2& size):
     samplesToUse(4), lightSize(size)

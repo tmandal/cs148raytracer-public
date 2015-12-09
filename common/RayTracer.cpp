@@ -1,6 +1,7 @@
 #include "common/RayTracer.h"
 #include "common/Application.h"
 #include "common/Scene/Scene.h"
+#include "common/Scene/Lights/Light.h"
 #include "common/Scene/Camera/Camera.h"
 #include "common/Scene/Geometry/Ray/Ray.h"
 #include "common/Intersection/IntersectionState.h"
@@ -44,6 +45,11 @@ void RayTracer::Run()
 #endif
     }
     
+    for (size_t i = 0; i < currentScene->GetTotalLights(); ++i)
+    {
+        const Light* lightObject = currentScene->GetLightObject(i);
+        std::cout << "Bounding box of light object " << i << "  : minVtx = " << glm::to_string(lightObject->GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(lightObject->GetBoundingBox().maxVertex) << std::endl;
+    }
 
     currentRenderer->InitializeRenderer();
 
