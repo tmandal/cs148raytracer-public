@@ -11,10 +11,10 @@
 #include "common/Rendering/Material/Material.h"
 #include "glm/gtx/component_wise.hpp"
 
-//#define VISUALIZE_PHOTON_MAPPING 1
+#define VISUALIZE_PHOTON_MAPPING 1
 //#define PHOTON_MAPPING_DEBUG
 //#define PHOTON_GATHERING_DEBUG
-#define FINAL_PHOTON_GATHERING
+//#define FINAL_PHOTON_GATHERING
 
 // Utility
 float glm_max_component(glm::vec3 vector)
@@ -90,6 +90,7 @@ void PhotonMappingRenderer::GenericPhotonMapGeneration(int totalPhotons)
             std::vector<char> path;
             path.push_back('L');
             currentLight->GenerateRandomPhotonRay(photonRay);
+            //std::cout << "TracePhoton " << j << std::endl;
             TracePhoton(true, &photonRay, photonIntensity, path, 1.f, maxPhotonBounces);
         }
     }
@@ -137,6 +138,7 @@ void PhotonMappingRenderer::SpecularPhotonMapGeneration(int totalPhotons)
             photonRay.SetRayDirection(glm::normalize(glm::vec3(randObjPoint - photonRay.GetPosition())));
             // TODO : Redo initial photon ray construction if it does not hit a specular object
 
+            //std::cout << "TraceSpecularPhoton " << j << std::endl;
             TraceSpecularPhoton(&photonRay, photonIntensity, path, 1.f, maxPhotonBounces);
         }
     }
@@ -381,7 +383,7 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
         const glm::vec3     intersectionPoint = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
         glm::vec3   finalGatherColor;
         int         totalFinalGatherRays = 0;
-        for (size_t i = 0; i < finalGatherRayNumber; ++i)
+        for (int i = 0; i < finalGatherRayNumber; ++i)
         {
             // Hemisphere sampling
             float   u1 = RandFloat01();

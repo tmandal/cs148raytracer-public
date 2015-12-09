@@ -54,6 +54,46 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
+newmtl WallLight:CrystalSG
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 2.50
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl WallLight:LightSG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 1.00 1.00 1.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 18.00
+newmtl WallLight:LightShadeSG
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 0.42 0.42 0.42
+Ni 1.53
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl WallLight:MetalFrameSG
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl WallLight:MetalRingSG
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
 newmtl WindowFrameSG
 illum 4
 Kd 0.50 0.50 0.50
@@ -88,7 +128,7 @@ Ks 1.80 1.80 1.80
 Ns 510.00
 newmtl WineLiquidSG
 illum 4
-Kd 0.50 0.50 0.50
+Kd 0.45 0.19 0.22
 Ka 0.00 0.00 0.00
 Tf 0.40 0.40 0.40
 Ni 1.33

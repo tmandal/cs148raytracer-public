@@ -41,19 +41,15 @@ void VolumeLight::ComputeSampleRays(std::vector<Ray>& output, glm::vec3 origin, 
         size_t                  p = rand()%meshObject->GetTotalPrimitives();
         const PrimitiveBase*    primitive = meshObject->GetPrimitive(p);
         glm::vec3               sample = primitive->GetVertexPosition(0) + RandFloat01() * (primitive->GetVertexPosition(1) - primitive->GetVertexPosition(0)) + RandFloat01() * (primitive->GetVertexPosition(2) - primitive->GetVertexPosition(1));
-        const glm::vec3         lightPosition = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(sample, 1.f));
+        glm::vec3               lightPosition = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(sample, 1.f));
         const glm::vec3         rayDirection = glm::normalize(lightPosition - origin);
+        lightPosition -= rayDirection * LARGE_EPSILON;
         const float             distanceToOrigin = glm::distance(origin, lightPosition);
         const glm::vec3         lightNormal = glm::vec3(GetObjectToWorldMatrix() * glm::vec4(primitive->GetPrimitiveNormal(), 1.f));
-        if (true || glm::dot(rayDirection, lightNormal) < - SMALL_EPSILON)
-        {
+        if (glm::dot(rayDirection, lightNormal) < - SMALL_EPSILON)
             output.emplace_back(origin, rayDirection, distanceToOrigin);
-        }
-        else
-        {
-            // retry
+        else    // retry
             --i;
-        }
     }
 }
 

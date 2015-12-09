@@ -3,6 +3,8 @@
 //
 
 #include "common/Rendering/Media/Media.h"
+#include "common/Intersection/IntersectionState.h"
+#include "common/Scene/Geometry/Primitives/Primitive.h"
 
 template <typename T>
 T TrilinearInterpolation(glm::vec3 v, T* p)

@@ -61,7 +61,7 @@ std::shared_ptr<Scene> Assignment8::CreateScene() const
     newScene->AddSceneObject(cubeSceneObject);
 
     // Lights
-#if !defined(DO_DEPTH_OF_FIELD) && !defined(DO_PHOTON_GATHERING)
+#if !defined(DO_DEPTH_OF_FIELD) //&& !defined(DO_PHOTON_GATHERING)
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
 #if defined(DO_PHOTON_GATHERING)
 
@@ -78,7 +78,7 @@ std::shared_ptr<Scene> Assignment8::CreateScene() const
     newScene->AddLight(pointLight);
 #endif
     
-#if defined(DO_DEPTH_OF_FIELD) || defined(DO_PHOTON_GATHERING)
+#if defined(DO_DEPTH_OF_FIELD) //|| defined(DO_PHOTON_GATHERING)
 #if defined(DO_PHOTON_GATHERING)
 
 #ifdef PHOTON_GATHERING_USES_SPHERE

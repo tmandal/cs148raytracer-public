@@ -8,12 +8,13 @@ std::shared_ptr<Camera> RtImage::CreateCamera() const
     const glm::vec2 resolution = GetImageOutputResolution();
 #if 1
     std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
-    camera->SetPosition(glm::vec3(0.5f, -4.f, 2.f));
+    //camera->SetPosition(glm::vec3(0.5f, -4.f, 2.f));
+    camera->SetPosition(glm::vec3(0.1f, -4.f, 0.3f));
 #else
     std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 58.f);
     camera->SetPosition(glm::vec3(0.5f, -8.f, 2.f));
 #endif
-    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.0f - PI/12.f);
+    camera->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.0f/* - PI/12.f*/);
     
     // For depth of field
     //camera->SetZFocal(3.5);
@@ -70,7 +71,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         }
         else if (matNameStr.compare("WineLiquidSG") == 0)
         {
-            materialCopy->SetTransmittance(0.99);
+            materialCopy->SetTransmittance(0.5);
         }
         else if (matNameStr.compare("WindowHandleSG") == 0)
         {
@@ -91,6 +92,26 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         {
             materialCopy->SetTexture("ambientTexture", TextureLoader::LoadTexture("rtimage/Cityscape3.jpg"));
         }
+        else if (matNameStr.compare("WallLight:CrystalSG") == 0)
+        {
+            materialCopy->SetTransmittance(0.9);
+        }
+        else if (matNameStr.compare("WallLight:MetalRingSG") == 0)
+        {
+            materialCopy->SetReflectivity(0.5);
+        }
+        else if (matNameStr.compare("WallLight:MetalFrameSG") == 0)
+        {
+            materialCopy->SetReflectivity(0.5);
+        }
+        else if (matNameStr.compare("WallLight:LightSG") == 0)
+        {
+        }
+        else if (matNameStr.compare("WallLight:LightShadeSG") == 0)
+        {
+            materialCopy->SetTransmittance(0.7);
+            materialCopy->SetReflectivity(0.2);
+        }
         
         rtObjects[i]->SetMaterial(materialCopy);
         
@@ -98,6 +119,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     }
     
     //rtObjects.erase(rtObjects.begin()+13);
+    //rtObjects.erase(rtObjects.begin()+8);
     //rtObjects.erase(rtObjects.begin()+0);
     
 
@@ -113,9 +135,12 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     // Lights
 #if 1
     std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-    pointLight->SetPosition(glm::vec3(5.0f, 3.0f, 4.80f));
-    pointLight->SetLightColor(glm::vec3(0.5f));
+    pointLight->SetPosition(glm::vec3(-3.0f, 3.0f, 4.80f));
+    pointLight->SetLightColor(glm::vec3(1.f));
     newScene->AddLight(pointLight);
+#endif
+
+#if 1
 #endif
     
 #if 0
@@ -155,15 +180,18 @@ std::shared_ptr<ColorSampler> RtImage::CreateSampler() const
 
 std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> scene, std::shared_ptr<ColorSampler> sampler) const
 {
-    //return std::make_shared<BackwardRenderer>(scene, sampler);
+#if 1
+    return std::make_shared<BackwardRenderer>(scene, sampler);
+#else
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
-    //photonRenderer->SetNumberOfDiffusePhotons(2000000);
-    //photonRenderer->SetNumberOfSpecularPhotons(2000000);
+    //photonRenderer->SetNumberOfDiffusePhotons(100000);
+    //photonRenderer->SetNumberOfSpecularPhotons(50000);
     photonRenderer->SetDiffusePhotonSphereRadius(0.03);
     photonRenderer->SetDiffusePhotonGatherMultiplier(16.0);
     photonRenderer->SetSpecularPhotonSphereRadius(0.01);
     photonRenderer->SetSpecularPhotonGatherMultiplier(16.0);
     return photonRenderer;
+#endif
 }
 
 int RtImage::GetSamplesPerPixel() const
