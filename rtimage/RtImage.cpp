@@ -124,6 +124,9 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         std::cout << "RT2 : Mesh object index - " << i << " name - " << rtObjects[i]->GetName() << " , material name - " << matNameStr << std::endl;
     }
     
+    rtObjects.erase(rtObjects.begin()+76);  // xmas light
+    rtObjects.erase(rtObjects.begin()+75);  // xmas light
+    
     //rtObjects.erase(rtObjects.begin()+13);
     //rtObjects.erase(rtObjects.begin()+8);
     //rtObjects.erase(rtObjects.begin()+0);
@@ -168,7 +171,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     newScene->AddLight(rightXmasLight);
 #endif
 
-#if 1
+#if 0
     glm::vec3   externLightCenter = glm::vec3(0.8951965, 5.7, 0.4052295);
     //glm::vec3   externLightSize = glm::vec3(1.9, 0.0, 1.4);
     glm::vec3   externLightSize = glm::vec3(1.0, 0.0, 1.0);
@@ -177,7 +180,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     externLightColor.push_back(glm::vec3(242, 211, 57)/255.f);  // 1
     externLightColor.push_back(glm::vec3(198, 77, 112)/255.f);  // 2
     externLightColor.push_back(glm::vec3(159, 211, 246)/255.f);  // 3
-    externLightColor.push_back(glm::vec3(0)/255.f);  // 4 -skipped
+    externLightColor.push_back(glm::vec3(127, 255, 212)/255.f);  // 4
     externLightColor.push_back(glm::vec3(250, 162, 63)/255.f);  // 5
     externLightColor.push_back(glm::vec3(174, 55, 64)/255.f);  // 6
     externLightColor.push_back(glm::vec3(114, 109, 192)/255.f);  // 7
@@ -186,8 +189,6 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     {
         for (int k = -1; k <= 1; ++k)
         {
-            if (i == 0 && k == 0)
-                continue;
             size_t      externLightIndex = (i+1) * 3 + (k+1);
             glm::vec3   pointLightPosition = externLightCenter + glm::vec3(i, 0, k) * externLightSize/2.f;
             std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
@@ -198,9 +199,9 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     }
 #endif
 
-#if 0
+#if 1
     std::shared_ptr<VolumeLight> volumeLight = std::make_shared<VolumeLight>(8);
-    volumeLight->AddMeshObject(std::vector<std::shared_ptr<MeshObject>>(1, rtObjects[20])); // LeftLight
+    volumeLight->AddMeshObject(std::vector<std::shared_ptr<MeshObject>>(1, rtObjects[21])); // LeftLight
     volumeLight->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
     volumeLight->MultScale(1/100.f);
     volumeLight->Translate(glm::vec3(0.f, 5.f, 0.f));
@@ -208,9 +209,11 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     volumeLight->Finalize();
     volumeLight->SetLightColor(glm::vec3(1.f));
     newScene->AddLight(volumeLight);
+#endif
     
+#if 0
     std::shared_ptr<VolumeLight> volumeLight2 = std::make_shared<VolumeLight>(8);
-    volumeLight2->AddMeshObject(std::vector<std::shared_ptr<MeshObject>>(1, rtObjects[42])); // RightLight
+    volumeLight2->AddMeshObject(std::vector<std::shared_ptr<MeshObject>>(1, rtObjects[43])); // RightLight
     volumeLight2->Rotate(glm::vec3(1.f, 0.f, 0.f), PI / 2.f);
     volumeLight2->MultScale(1/100.f);
     volumeLight2->Translate(glm::vec3(0.f, 5.f, 0.f));
@@ -273,7 +276,7 @@ std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> s
 
 int RtImage::GetSamplesPerPixel() const
 {
-    return 1;
+    return 4;
 }
 
 bool RtImage::NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleIndex)

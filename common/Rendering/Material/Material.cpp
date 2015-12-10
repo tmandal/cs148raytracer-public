@@ -79,7 +79,7 @@ glm::vec3 Material::ComputeTransmission(const class Renderer* renderer, const st
 
 glm::vec3 Material::ComputeTransmissiveAttenuation() const
 {
-    return glm::vec3(1.f);
+    //return glm::vec3(1.f);
     return GetBaseDiffuseReflection() * transmittance;
 }
 

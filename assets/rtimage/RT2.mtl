@@ -73,7 +73,7 @@ Ns 18.00
 newmtl WallLight:LightSG
 illum 4
 Kd 0.00 0.00 0.00
-Ka 1.00 1.00 1.00
+Ka 0.40 0.40 0.40
 Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.00 0.00 0.00
@@ -112,7 +112,7 @@ Ks 0.50 0.50 0.50
 Ns 18.00
 newmtl WindowGlassSG
 illum 4
-Kd 0.50 0.50 0.50
+Kd 1.00 1.00 1.00
 Ka 0.00 0.00 0.00
 Tf 0.19 0.19 0.19
 Ni 1.53
