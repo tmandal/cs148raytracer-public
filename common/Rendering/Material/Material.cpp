@@ -6,7 +6,7 @@
 #include "common/Rendering/Textures/Texture2D.h"
 
 Material::Material():
-    reflectivity(0.f), transmittance(0.f), indexOfRefraction(1.f)
+    reflectivity(0.f), transmittance(0.f), indexOfRefraction(1.f), diffuseAttentuation(1.f)
 {
 }
 
@@ -46,7 +46,7 @@ glm::vec3 Material::ComputeBRDF(const struct IntersectionState& intersection, co
     const glm::vec3 specularColor = computeSpecular ? ComputeSpecular(intersection, lightColor, NdL, NdH, NdV, VdH) : glm::vec3();
 
     const float attenuation = std::max((1.f - reflectivity - transmittance) * lightAttenuation, 0.f);
-    return attenuation * (diffuseColor + specularColor);
+    return attenuation * (diffuseAttentuation * diffuseColor + specularColor);
 }
 
 glm::vec3 Material::ComputeDiffuse(const struct IntersectionState& intersection, const glm::vec3& lightColor, const float NdL, const float NdH, const float NdV, const float VdH) const
@@ -79,7 +79,13 @@ glm::vec3 Material::ComputeTransmission(const class Renderer* renderer, const st
 
 glm::vec3 Material::ComputeTransmissiveAttenuation() const
 {
-    return GetBaseDiffuseReflection() * (1 - transmittance);
+    return glm::vec3(1.f);
+    return GetBaseDiffuseReflection() * transmittance;
+}
+
+void Material::SetDiffuseAttenuation(float input)
+{
+    diffuseAttentuation = input;
 }
 
 void Material::SetReflectivity(float input)

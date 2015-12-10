@@ -45,11 +45,13 @@ void RayTracer::Run()
 #endif
     }
     
+#if 0
     for (size_t i = 0; i < currentScene->GetTotalLights(); ++i)
     {
         const Light* lightObject = currentScene->GetLightObject(i);
         std::cout << "Bounding box of light object " << i << "  : minVtx = " << glm::to_string(lightObject->GetBoundingBox().minVertex) << " maxVtx = " << glm::to_string(lightObject->GetBoundingBox().maxVertex) << std::endl;
     }
+#endif
 
     currentRenderer->InitializeRenderer();
 

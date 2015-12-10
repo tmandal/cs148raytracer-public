@@ -9,7 +9,7 @@ std::shared_ptr<Camera> RtImage::CreateCamera() const
 #if 1
     std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 26.6f);
     //camera->SetPosition(glm::vec3(0.5f, -4.f, 2.f));
-    camera->SetPosition(glm::vec3(0.1f, -4.f, 0.3f));
+    camera->SetPosition(glm::vec3(0.25f, -4.f, -0.5f));
 #else
     std::shared_ptr<PerspectiveCamera> camera = std::make_shared<PerspectiveCamera>(resolution.x / resolution.y, 58.f);
     camera->SetPosition(glm::vec3(0.5f, -8.f, 2.f));
@@ -52,6 +52,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
             materialCopy->SetReflectivity(0.1);
             materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/Marble.jpg"));
             materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/Marble.jpg"));
+            materialCopy->SetDiffuseAttenuation(0.5f);
         }
         else if (matNameStr.compare("WindowFrameSG") == 0)
         {
@@ -86,6 +87,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
         {
             materialCopy->SetTexture("diffuseTexture", TextureLoader::LoadTexture("rtimage/Wallpaper1.jpg"));
             materialCopy->SetTexture("specularTexture", TextureLoader::LoadTexture("rtimage/Wallpaper1.jpg"));
+            materialCopy->SetDiffuseAttenuation(0.5f);
             rtObjects[i]->ScalePrimitiveUV(glm::vec2(8.0, 8.0));
         }
         else if (matNameStr.compare("CityscapeSG") == 0)
@@ -112,6 +114,10 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
             materialCopy->SetTransmittance(0.7);
             materialCopy->SetReflectivity(0.2);
         }
+        else if (matNameStr.compare("XmasLightSG") == 0)
+        {
+            //materialCopy->SetTransmittance(0.05);
+        }
         
         rtObjects[i]->SetMaterial(materialCopy);
         
@@ -133,11 +139,63 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
 
     // Lights
+#if 0
+    std::shared_ptr<PointLight> ceilPointLight = std::make_shared<PointLight>();
+    ceilPointLight->SetPosition(glm::vec3(3.0f, 0.0f, 4.80f));
+    ceilPointLight->SetLightColor(glm::vec3(0.5f));
+    newScene->AddLight(ceilPointLight);
+#endif
+
+#if 0
+    std::shared_ptr<AreaLight> ceilAreaLight = std::make_shared<AreaLight>(glm::vec2(0.5f, 0.5f));
+    ceilAreaLight->SetSamplerAttributes(glm::vec3(2.f, 2.f, 1.f), 8);
+    ceilAreaLight->SetPosition(glm::vec3(3.0f, 0.0f, 4.80f));
+    ceilAreaLight->SetLightColor(glm::vec3(0.5f));
+    newScene->AddLight(ceilAreaLight);
+#endif
+
+#if 0
+    std::shared_ptr<PointLight> leftXmasLight = std::make_shared<PointLight>();
+    leftXmasLight->SetPosition(glm::vec3(0.25f, 2.03f, -1.13));
+    leftXmasLight->SetLightColor(glm::vec3(1.0f));
+    newScene->AddLight(leftXmasLight);
+#endif
+
+#if 0
+    std::shared_ptr<PointLight> rightXmasLight = std::make_shared<PointLight>();
+    rightXmasLight->SetPosition(glm::vec3(1.56f, 2.03f, -1.13f));
+    rightXmasLight->SetLightColor(glm::vec3(1.0f));
+    newScene->AddLight(rightXmasLight);
+#endif
+
 #if 1
-    std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-    pointLight->SetPosition(glm::vec3(-3.0f, 3.0f, 4.80f));
-    pointLight->SetLightColor(glm::vec3(0.5f));
-    newScene->AddLight(pointLight);
+    glm::vec3   externLightCenter = glm::vec3(0.8951965, 5.7, 0.4052295);
+    //glm::vec3   externLightSize = glm::vec3(1.9, 0.0, 1.4);
+    glm::vec3   externLightSize = glm::vec3(1.0, 0.0, 1.0);
+    std::vector<glm::vec3>   externLightColor;
+    externLightColor.push_back(glm::vec3(249, 149, 51)/255.f);  // 0
+    externLightColor.push_back(glm::vec3(242, 211, 57)/255.f);  // 1
+    externLightColor.push_back(glm::vec3(198, 77, 112)/255.f);  // 2
+    externLightColor.push_back(glm::vec3(159, 211, 246)/255.f);  // 3
+    externLightColor.push_back(glm::vec3(0)/255.f);  // 4 -skipped
+    externLightColor.push_back(glm::vec3(250, 162, 63)/255.f);  // 5
+    externLightColor.push_back(glm::vec3(174, 55, 64)/255.f);  // 6
+    externLightColor.push_back(glm::vec3(114, 109, 192)/255.f);  // 7
+    externLightColor.push_back(glm::vec3(94, 126, 223)/255.f);  // 8
+    for (int i = -1; i <= 1; ++i)
+    {
+        for (int k = -1; k <= 1; ++k)
+        {
+            if (i == 0 && k == 0)
+                continue;
+            size_t      externLightIndex = (i+1) * 3 + (k+1);
+            glm::vec3   pointLightPosition = externLightCenter + glm::vec3(i, 0, k) * externLightSize/2.f;
+            std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
+            pointLight->SetPosition(pointLightPosition);
+            pointLight->SetLightColor(externLightColor[externLightIndex]);
+            newScene->AddLight(pointLight);
+        }
+    }
 #endif
 
 #if 0

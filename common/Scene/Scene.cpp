@@ -61,6 +61,7 @@ bool Scene::Trace(class Ray* inputRay, IntersectionState* outputIntersection, gl
             }
             else if (attenuation != nullptr)    // Hit an opaque object
                 *attenuation = glm::vec3(0.f);
+            //std::cout << "ShadowRay trace : attenuation for transmissive = " << glm::to_string(*attenuation) << std::endl;
             
         }
         else    {

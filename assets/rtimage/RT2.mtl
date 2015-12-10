@@ -8,12 +8,12 @@ Ks 0.50 0.50 0.50
 Ns 18.00
 newmtl CityscapeSG
 illum 4
-Kd 0.50 0.50 0.50
+Kd 0.00 0.00 0.00
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
-Ks 0.50 0.50 0.50
-Ns 18.00
+Ks 0.00 0.00 0.00
+Ns 0.00
 newmtl FloorSG
 illum 4
 Kd 0.50 0.50 0.50
@@ -31,6 +31,14 @@ Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
 newmtl LeftWallSG
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl MoldingSG
 illum 4
 Kd 0.50 0.50 0.50
 Ka 0.00 0.00 0.00
@@ -134,3 +142,19 @@ Tf 0.40 0.40 0.40
 Ni 1.33
 Ks 0.50 0.50 0.50
 Ns 18.00
+newmtl XmasLight3:XmasLightSG
+illum 4
+Kd 0.58 0.44 0.31
+Ka 0.00 0.00 0.00
+Tf 0.89 0.89 0.89
+Ni 1.00
+Ks 0.96 0.96 0.96
+Ns 192.01
+newmtl XmasLightSG
+illum 4
+Kd 0.95 0.07 0.07
+Ka 0.00 0.00 0.00
+Tf 0.44 0.44 0.44
+Ni 1.00
+Ks 0.96 0.96 0.96
+Ns 192.01
