@@ -1,4 +1,5 @@
 #include "common/RayTracer.h"
+#include <cstdlib>
 
 //#define ASSIGNMENT 8
 #if ASSIGNMENT == 5
@@ -35,11 +36,25 @@ int main(int argc, char** argv)
     srand(seed);
     std::cout << "Using seed : " << seed << std::endl;
     std::string outputFilename = "output.png";
-    if (argc > 1)
-        outputFilename = argv[1];
+    glm::vec2   imageResolution = glm::vec2(640.f, 480.f);
+    glm::uvec2  imageGridIndex = glm::uvec2(0, 0);
+    glm::uvec2  imageGridSize = glm::uvec2(480, 640);
+    if (argc > 7)
+    {
+        imageResolution.x = strtol(argv[1], NULL, 0);
+        imageResolution.y = strtol(argv[2], NULL, 0);
+        imageGridIndex.x  = strtol(argv[3], NULL, 0);
+        imageGridIndex.y  = strtol(argv[4], NULL, 0);
+        imageGridSize.x   = strtol(argv[5], NULL, 0);
+        imageGridSize.y   = strtol(argv[6], NULL, 0);
+        outputFilename = argv[7];
+    }
 
     std::unique_ptr<APPLICATION> currentApplication = make_unique<APPLICATION>();
     currentApplication->SetOutputFilename(outputFilename);
+    currentApplication->SetImageOutputResolution(imageResolution);
+    currentApplication->SetImageGridIndex(imageGridIndex);
+    currentApplication->SetImageGridSize(imageGridSize);
     RayTracer rayTracer(std::move(currentApplication));
 
     DIAGNOSTICS_TIMER(timer, "Ray Tracer");

@@ -63,8 +63,17 @@ void RayTracer::Run()
     const int maxSamplesPerPixel = storedApplication->GetSamplesPerPixel();
     assert(maxSamplesPerPixel >= 1);
 
-    for (int r = 0; r < static_cast<int>(currentResolution.y); ++r) {
-        for (int c = 0; c < static_cast<int>(currentResolution.x); ++c) {
+    glm::uvec2  gridIndex = storedApplication->GetImageGridIndex();
+    glm::uvec2  gridSize  = storedApplication->GetImageGridSize();
+
+    glm::uvec2  gridStart = gridIndex * gridSize;
+    glm::uvec2  gridEnd   = (gridIndex + glm::uvec2(1, 1)) * gridSize;
+
+    assert (gridEnd.x <= static_cast<int>(currentResolution.y));
+    assert (gridEnd.y <= static_cast<int>(currentResolution.x));
+
+    for (size_t r = gridStart.x; r < gridEnd.x; ++r) {
+        for (size_t c = gridStart.y; c < gridEnd.y; ++c) {
             imageWriter.SetPixelColor(currentSampler->ComputeSamplesAndColor(maxSamplesPerPixel, 2, [&](glm::vec3 inputSample) {
                 const glm::vec3 minRange(-0.5f, -0.5f, 0.f);
                 const glm::vec3 maxRange(0.5f, 0.5f, 0.f);

@@ -139,7 +139,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     
 
     // Lights
-#if 0
+#if 1
     std::shared_ptr<PointLight> ceilPointLight = std::make_shared<PointLight>();
     ceilPointLight->SetPosition(glm::vec3(3.0f, 0.0f, 4.80f));
     ceilPointLight->SetLightColor(glm::vec3(0.5f));
@@ -168,7 +168,7 @@ std::shared_ptr<Scene> RtImage::CreateScene() const
     newScene->AddLight(rightXmasLight);
 #endif
 
-#if 1
+#if 0
     glm::vec3   externLightCenter = glm::vec3(0.8951965, 5.7, 0.4052295);
     //glm::vec3   externLightSize = glm::vec3(1.9, 0.0, 1.4);
     glm::vec3   externLightSize = glm::vec3(1.0, 0.0, 1.0);
@@ -289,9 +289,4 @@ int RtImage::GetMaxReflectionBounces() const
 int RtImage::GetMaxRefractionBounces() const
 {
     return 6;
-}
-
-glm::vec2 RtImage::GetImageOutputResolution() const
-{
-    return glm::vec2(640.f, 480.f);
 }

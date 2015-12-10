@@ -13,5 +13,4 @@ public:
     virtual bool NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleIndex) override;
     virtual int GetMaxReflectionBounces() const override;
     virtual int GetMaxRefractionBounces() const override;
-    virtual glm::vec2 GetImageOutputResolution() const override;
 };
