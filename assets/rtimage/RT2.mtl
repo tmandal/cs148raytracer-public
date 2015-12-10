@@ -40,11 +40,11 @@ Ks 0.50 0.50 0.50
 Ns 18.00
 newmtl MoldingSG
 illum 4
-Kd 0.50 0.50 0.50
+Kd 0.30 0.30 0.30
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
-Ks 0.50 0.50 0.50
+Ks 0.30 0.30 0.30
 Ns 18.00
 newmtl RightWallSG
 illum 4
@@ -73,7 +73,7 @@ Ns 18.00
 newmtl WallLight:LightSG
 illum 4
 Kd 0.00 0.00 0.00
-Ka 0.40 0.40 0.40
+Ka 0.40 0.38 0.36
 Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.00 0.00 0.00

@@ -2,6 +2,7 @@
 #include "common/Scene/Scene.h"
 #include "common/Sampling/ColorSampler.h"
 #include "common/Scene/Lights/Light.h"
+#include "common/Scene/Lights/Area/AreaLight.h"
 #include "common/Scene/Geometry/Primitives/Primitive.h"
 #include "common/Scene/Geometry/Mesh/MeshObject.h"
 #include "common/Rendering/Material/Material.h"
@@ -43,7 +44,7 @@ std::pair<int, glm::vec3> PhotonMappingRenderer::GetPhotonIntensity(const class 
     float totalLightIntensity = 0.f;
     for (size_t i = 0; i < storedScene->GetTotalLights(); ++i) {
         const Light* currentLight = storedScene->GetLightObject(i);
-        if (!currentLight) {
+        if (!currentLight || typeid(*currentLight) != typeid(AreaLight)) {
             continue;
         }
         totalLightIntensity += glm::length(currentLight->GetLightColor());
@@ -62,7 +63,7 @@ void PhotonMappingRenderer::GenericPhotonMapGeneration(int totalPhotons)
     // Shoot photons -- number of photons for light is proportional to the light's intensity relative to the total light intensity of the scene.
     for (size_t i = 0; i < storedScene->GetTotalLights(); ++i) {
         const Light* currentLight = storedScene->GetLightObject(i);
-        if (!currentLight) {
+        if (!currentLight || typeid(*currentLight) != typeid(AreaLight)) {
             continue;
         }
 
@@ -92,7 +93,13 @@ void PhotonMappingRenderer::SpecularPhotonMapGeneration(int totalPhotons)
             const Material*     objectMaterial = meshObject->GetMaterial();
             assert(objectMaterial);
             if (objectMaterial->IsReflective() || objectMaterial->IsTransmissive()) {
-                specularMeshObjects.push_back(std::make_pair(meshObject, &sceneObject));
+                size_t  repeatCount = 1;
+                if (   meshObject->GetName().compare("g WineGlass") == 0
+                    || meshObject->GetName().compare("g WineLiquid") == 0
+                   )
+                    repeatCount = 50;
+                for (size_t i = 0; i < repeatCount; ++i)
+                    specularMeshObjects.push_back(std::make_pair(meshObject, &sceneObject));
             }
         }
     }
@@ -103,7 +110,7 @@ void PhotonMappingRenderer::SpecularPhotonMapGeneration(int totalPhotons)
 
     for (size_t i = 0; i < storedScene->GetTotalLights(); ++i) {
         const Light* currentLight = storedScene->GetLightObject(i);
-        if (!currentLight) {
+        if (!currentLight || typeid(*currentLight) != typeid(AreaLight)) {
             continue;
         }
 
