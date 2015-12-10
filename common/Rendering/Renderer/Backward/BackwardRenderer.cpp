@@ -39,6 +39,8 @@ glm::vec3 BackwardRenderer::ComputeSampleColor(const IntersectionState& intersec
         // Sample light using rays, Number of samples and where to sample is determined by the light.
         std::vector<Ray> sampleRays;
         light->ComputeSampleRays(sampleRays, intersectionPoint, intersection.ComputeNormal());
+        
+        //std::cout << "Found " << sampleRays.size() << " from light source at " << glm::to_string(intersectionPoint) << std::endl;
 
         for (size_t s = 0; s < sampleRays.size(); ++s) {
             // note that max T should be set to be right before the light.
@@ -51,6 +53,7 @@ glm::vec3 BackwardRenderer::ComputeSampleColor(const IntersectionState& intersec
             // Note that the material should compute the parts of the lighting equation too.
             const glm::vec3 brdfResponse = objectMaterial->ComputeBRDF(intersection, light->GetLightColor() * meshAttenuation, sampleRays[s], fromCameraRay, lightAttenuation);
             sampleColor += brdfResponse;
+            //std::cout << "    BRDF with sample ray - meshAttenuation : " << glm::to_string(meshAttenuation) << " BRDF color : " << glm::to_string(brdfResponse) << std::endl;
         }
     }
     sampleColor += objectMaterial->ComputeNonLightDependentBRDF(this, intersection);
