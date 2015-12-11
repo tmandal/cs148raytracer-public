@@ -72,6 +72,7 @@ void RayTracer::Run()
     assert (gridEnd.x <= static_cast<int>(currentResolution.y));
     assert (gridEnd.y <= static_cast<int>(currentResolution.x));
 
+#pragma omp parallel for num_threads(8)
     for (size_t r = gridStart.x; r < gridEnd.x; ++r) {
         for (size_t c = gridStart.y; c < gridEnd.y; ++c) {
             imageWriter.SetPixelColor(currentSampler->ComputeSamplesAndColor(maxSamplesPerPixel, 2, [&](glm::vec3 inputSample) {

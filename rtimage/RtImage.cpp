@@ -264,8 +264,8 @@ std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> s
     return std::make_shared<BackwardRenderer>(scene, sampler);
 #else
     std::shared_ptr<class PhotonMappingRenderer>    photonRenderer = std::make_shared<PhotonMappingRenderer>(scene, sampler);
-    //photonRenderer->SetNumberOfDiffusePhotons(100000);
-    //photonRenderer->SetNumberOfSpecularPhotons(50000);
+    photonRenderer->SetNumberOfDiffusePhotons(1000000);
+    photonRenderer->SetNumberOfSpecularPhotons(250000);
     photonRenderer->SetDiffusePhotonSphereRadius(0.03);
     photonRenderer->SetDiffusePhotonGatherMultiplier(4.0);
     photonRenderer->SetSpecularPhotonSphereRadius(0.01);
@@ -276,7 +276,7 @@ std::shared_ptr<class Renderer> RtImage::CreateRenderer(std::shared_ptr<Scene> s
 
 int RtImage::GetSamplesPerPixel() const
 {
-    return 1;
+    return 32;
 }
 
 bool RtImage::NotifyNewPixelSample(glm::vec3 inputSampleColor, int sampleIndex)

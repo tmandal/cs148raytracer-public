@@ -93,11 +93,11 @@ void PhotonMappingRenderer::SpecularPhotonMapGeneration(int totalPhotons)
             const Material*     objectMaterial = meshObject->GetMaterial();
             assert(objectMaterial);
             if (objectMaterial->IsReflective() || objectMaterial->IsTransmissive()) {
-                size_t  repeatCount = 1;
+                size_t  repeatCount = 0;
                 if (   meshObject->GetName().compare("g WineGlass") == 0
                     || meshObject->GetName().compare("g WineLiquid") == 0
                    )
-                    repeatCount = 50;
+                    repeatCount = 1;
                 for (size_t i = 0; i < repeatCount; ++i)
                     specularMeshObjects.push_back(std::make_pair(meshObject, &sceneObject));
             }
@@ -370,7 +370,7 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
     }
 #elif defined(FINAL_PHOTON_GATHERING)
     if (intersection.hasIntersection) {
-        int finalGatherRayNumber = 10;
+        int finalGatherRayNumber = 32;
         const glm::vec3     intersectionPoint = intersection.intersectionRay.GetRayPosition(intersection.intersectionT);
         glm::vec3   finalGatherColor;
         int         totalFinalGatherRays = 0;
@@ -421,7 +421,7 @@ glm::vec3 PhotonMappingRenderer::ComputeSampleColor(const struct IntersectionSta
             IntersectionState state(0, 0);
             if (storedScene->Trace(&finalGatherRay, &state))
             {
-                finalGatherColor += ComputePhotonMapColor(intersection, fromCameraRay);
+                finalGatherColor += ComputePhotonMapColor(state, finalGatherRay);
                 ++totalFinalGatherRays;
             }
         }

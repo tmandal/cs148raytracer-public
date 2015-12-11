@@ -102,7 +102,7 @@ void VolumeLight::GenerateRandomPhotonRay(Ray& ray) const
     float   u2 = RandFloat01();
     
     float   r = sqrtf(u1);
-    float   theta = PI * u2;
+    float   theta = 2 * PI * u2;
     
     float   x = r * cosf(theta);
     float   y = r * sinf(theta);

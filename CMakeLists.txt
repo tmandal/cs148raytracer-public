@@ -28,11 +28,11 @@ endif()
 
 # CPP Flags
 if (NOT WIN32)
-	set(CXX_FLAGS "-Wall -std=c++11 -Wno-missing-braces")
+	set(CXX_FLAGS "-Wall -std=c++11 -Wno-missing-braces -fopenmp")
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fopenmp")
 
 # Common Files necessary for all assignments
 include_directories("./")
